@@ -1,0 +1,21 @@
+# node
+node_modules/
+
+# build output
+web/dist/
+web/.astro/
+
+# python (later phases)
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.db
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# os
+.DS_Store

@@ -1,0 +1,123 @@
+---
+import { DAYS, type Day } from '../lib/busyness';
+import { renderBars } from '../lib/bars';
+
+interface Props {
+  popularByDay: Record<Day, number[]>;
+  selectedDay: Day; // day shown on first paint
+  todayDay: Day; // real weekday — its current hour gets the "now" ring
+  nowHour: number;
+  caption: string;
+}
+const { popularByDay, selectedDay, todayDay, nowHour, caption } = Astro.props;
+
+const initialBars = renderBars(popularByDay[selectedDay], selectedDay === todayDay ? nowHour : null);
+const dataJson = JSON.stringify({ popularByDay, todayDay, nowHour });
+---
+
+<section class="card chart-card">
+  <div class="pop-head">
+    <span class="eyebrow">Popular times</span>
+    <div class="chips" id="day-chips">
+      {
+        DAYS.map((d) => (
+          <button
+            class:list={['chip', { active: d === selectedDay }]}
+            data-day={d}
+            type="button"
+            aria-pressed={d === selectedDay ? 'true' : 'false'}
+          >
+            {d}
+          </button>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="bars" id="pop-bars" set:html={initialBars} />
+
+  <div class="ticks">
+    <span>6a</span><span>Noon</span><span>6p</span><span>11p</span>
+  </div>
+  <div class="pop-caption">{caption}</div>
+
+  <script type="application/json" id="pop-data" set:html={dataJson} />
+</section>
+
+<script>
+  import { renderBars } from '../lib/bars';
+
+  const root = document.currentScript?.closest('section') ?? document;
+  const chips = document.getElementById('day-chips');
+  const bars = document.getElementById('pop-bars');
+  const dataEl = document.getElementById('pop-data');
+  if (chips && bars && dataEl) {
+    const { popularByDay, todayDay, nowHour } = JSON.parse(dataEl.textContent || '{}');
+
+    chips.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('button.chip') as HTMLButtonElement | null;
+      if (!btn) return;
+      const day = btn.dataset.day!;
+      for (const c of chips.querySelectorAll('button.chip')) {
+        const on = c === btn;
+        c.classList.toggle('active', on);
+        c.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      bars.innerHTML = renderBars(popularByDay[day], day === todayDay ? nowHour : null);
+    });
+  }
+</script>
+
+<style>
+  .chart-card {
+    padding: clamp(16px, 2.4vw, 22px);
+  }
+  .pop-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .chips {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .chip:hover {
+    border-color: var(--muted);
+  }
+  .chip.active {
+    border-color: var(--text);
+    background: var(--text);
+    color: var(--card);
+  }
+
+  .bars {
+    margin-top: 14px;
+  }
+  .ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+  .pop-caption {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+</style>

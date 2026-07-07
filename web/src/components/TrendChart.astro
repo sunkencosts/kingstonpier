@@ -1,0 +1,47 @@
+---
+import { renderSpark } from '../lib/spark';
+
+interface Props {
+  trend: number[];
+  nowHour: number;
+}
+const { trend, nowHour } = Astro.props;
+const svg = renderSpark(trend, nowHour);
+---
+
+<section class="card chart-card">
+  <div class="chart-head">
+    <span class="eyebrow">Today so far</span>
+    <span class="chart-sub">midnight → now</span>
+  </div>
+  <div class="chart-body" id="trend-svg" set:html={svg} />
+  <div class="ticks">
+    <span>6 AM</span><span>Noon</span><span>6 PM</span><span>Now</span>
+  </div>
+</section>
+
+<style>
+  .chart-card {
+    padding: clamp(16px, 2.4vw, 22px);
+  }
+  .chart-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .chart-sub {
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .chart-body {
+    margin-top: 12px;
+  }
+  .ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+</style>

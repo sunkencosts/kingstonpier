@@ -1,0 +1,120 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import HeroCard from '../components/HeroCard.astro';
+import WeatherCard from '../components/WeatherCard.astro';
+import TrendChart from '../components/TrendChart.astro';
+import PopularTimes from '../components/PopularTimes.astro';
+import Footer from '../components/Footer.astro';
+import { totalLevel, loHi, DAYS, type Day } from '../lib/busyness';
+import { initialNow } from '../lib/api';
+
+const now = initialNow();
+const TZ = 'America/Toronto';
+const updated = new Date(now.lastUpdated);
+
+const idx = totalLevel(now.total);
+const { lo, hi } = loHi(now.total);
+const secs = Math.max(0, Math.round((Date.now() - updated.getTime()) / 1000));
+
+// Scene time in Kingston's timezone: "Thu · 3:07 PM"
+const dow = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short' }).format(updated);
+const clock = new Intl.DateTimeFormat('en-US', {
+  timeZone: TZ,
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true,
+}).format(updated);
+const timestamp = `${dow} · ${clock}`;
+
+const todayDay = (DAYS.includes(dow as Day) ? dow : 'Thu') as Day;
+
+const hourNum = Number(
+  new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', hour12: false }).format(updated),
+);
+const daypart = hourNum < 12 ? 'morning' : hourNum < 17 ? 'afternoon' : 'evening';
+const dowLong = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'long' }).format(updated);
+const busier = now.comparePct >= 0;
+const compareSub = `about ${Math.abs(now.comparePct)}% ${busier ? 'above' : 'below'} a typical ${dowLong} ${daypart}`;
+
+const popularCaption = 'Usually busiest around 5–6 PM on weekdays.';
+---
+
+<Layout>
+  <main class="page" data-feed="live" data-updated={now.lastUpdated}>
+    <Header secs={secs} />
+
+    <div class="bento">
+      <HeroCard
+        total={now.total}
+        lo={lo}
+        hi={hi}
+        levelIdx={idx}
+        timestamp={timestamp}
+        comparePct={now.comparePct}
+        compareSub={compareSub}
+      />
+      <WeatherCard weather={now.weather} />
+
+      <div class="charts-row">
+        <TrendChart trend={now.trend} nowHour={now.nowHour} />
+        <PopularTimes
+          popularByDay={now.popularByDay}
+          selectedDay={todayDay}
+          todayDay={todayDay}
+          nowHour={now.nowHour}
+          caption={popularCaption}
+        />
+      </div>
+    </div>
+
+    <Footer secs={secs} />
+  </main>
+</Layout>
+
+<script>
+  // Theme toggle: explicit choice wins over the OS preference and persists.
+  const toggle = document.getElementById('theme-toggle');
+  toggle?.addEventListener('click', () => {
+    const root = document.documentElement;
+    const current =
+      root.getAttribute('data-theme') ??
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try {
+      localStorage.setItem('kp-theme', next);
+    } catch (_) {}
+  });
+
+  // Freshness ticker: derive "updated Ns ago" from the reading timestamp.
+  const page = document.querySelector('.page') as HTMLElement | null;
+  const secsEls = [document.getElementById('secs-ago'), document.getElementById('secs-ago-foot')];
+  function tick() {
+    const iso = page?.dataset.updated;
+    if (!iso) return;
+    const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+    for (const el of secsEls) if (el) el.textContent = String(s);
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // Live poll (~60s). Wired to the API contract; today it re-reads the mock.
+  // On failure it keeps the last-good view and flips to the stale state.
+  import { fetchNow, STALE_AFTER_MS } from '../lib/api';
+  async function poll() {
+    const data = await fetchNow();
+    if (!data) {
+      page?.setAttribute('data-feed', 'stale');
+      return;
+    }
+    const age = Date.now() - new Date(data.lastUpdated).getTime();
+    page?.setAttribute('data-feed', age > STALE_AFTER_MS ? 'stale' : 'live');
+    if (page) page.dataset.updated = data.lastUpdated;
+    tick();
+    // NOTE(live): when the API is real, re-render the hero/charts from `data`
+    // here (count, tide gauge, trend, compare badge). The mock is static, so
+    // there is nothing to repaint yet.
+  }
+  setInterval(poll, 60_000);
+</script>

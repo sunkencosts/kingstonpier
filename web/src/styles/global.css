@@ -1,0 +1,171 @@
+/* ── Theme tokens ─────────────────────────────────────────────────────────
+   Light is the default. Dark applies either from the OS preference (when the
+   user hasn't chosen) or from an explicit [data-theme] set by the toggle. */
+
+:root {
+  --card: #ffffff;
+  --card-2: #f1f5f4;
+  --border: #e4eae8;
+  --text: #173947;
+  --muted: #5e7a85;
+  --heading: #0f2b36;
+  --accent: #efa637;
+  --page: linear-gradient(175deg, #e9f3f4 0%, #f6f2e8 100%);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --card: #122a34;
+    --card-2: #0e222b;
+    --border: #254149;
+    --text: #dbeaee;
+    --muted: #8ca7b1;
+    --heading: #f0f7f9;
+    --accent: #f0ae45;
+    --page: linear-gradient(175deg, #0b1e27 0%, #0c2b2f 100%);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --card: #122a34;
+  --card-2: #0e222b;
+  --border: #254149;
+  --text: #dbeaee;
+  --muted: #8ca7b1;
+  --heading: #f0f7f9;
+  --accent: #f0ae45;
+  --page: linear-gradient(175deg, #0b1e27 0%, #0c2b2f 100%);
+  color-scheme: dark;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--page);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease;
+}
+
+.page {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: clamp(15px, 3vw, 26px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(13px, 2.2vw, 18px);
+}
+
+/* ── Cards ────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 14px 30px -20px rgba(20, 60, 80, 0.4);
+}
+
+.eyebrow {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Bento grid (the chosen layout) ───────────────────────────────────── */
+
+.bento {
+  display: grid;
+  gap: clamp(13px, 2vw, 16px);
+  grid-template-columns: 1.7fr 1fr;
+  align-items: start;
+}
+
+.charts-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: clamp(13px, 2vw, 16px);
+}
+
+/* The mock hard-codes two columns; add the collapse the real site needs. */
+@media (max-width: 880px) {
+  .bento {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Popular-times bars ───────────────────────────────────────────────── */
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 104px;
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 3px;
+  position: relative;
+}
+
+.bar {
+  width: 74%;
+  max-width: 15px;
+  border-radius: 4px;
+  transition: height 0.3s ease, background 0.3s ease;
+}
+
+.bar-now {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+/* ── Live-dot pulse ───────────────────────────────────────────────────── */
+
+@keyframes pierPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar,
+  .tide-seg {
+    transition: none;
+  }
+  .live-ping {
+    animation: none !important;
+  }
+}
