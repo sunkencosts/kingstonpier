@@ -1,0 +1,5 @@
+# API service only (read-only). Deliberately minimal and independent of the
+# tracker's CV/torch stack — nothing here pulls in ultralytics/torch.
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30
+httpx>=0.27
