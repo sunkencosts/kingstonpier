@@ -1,6 +1,6 @@
 ---
 import { DAYS, type Day } from '../lib/busyness';
-import { renderBars } from '../lib/bars';
+import { renderBars, scaleMaxOf } from '../lib/bars';
 
 interface Props {
   popularByDay: Record<Day, number[]>;
@@ -11,8 +11,9 @@ interface Props {
 }
 const { popularByDay, selectedDay, todayDay, nowHour, caption } = Astro.props;
 
-const initialBars = renderBars(popularByDay[selectedDay], selectedDay === todayDay ? nowHour : null);
-const dataJson = JSON.stringify({ popularByDay, todayDay, nowHour });
+const scaleMax = scaleMaxOf(popularByDay);
+const initialBars = renderBars(popularByDay[selectedDay], selectedDay === todayDay ? nowHour : null, scaleMax);
+const dataJson = JSON.stringify({ popularByDay, todayDay, nowHour, scaleMax });
 ---
 
 <section class="card chart-card">
@@ -47,13 +48,20 @@ const dataJson = JSON.stringify({ popularByDay, todayDay, nowHour });
 <script>
   import { renderBars } from '../lib/bars';
 
-  const root = document.currentScript?.closest('section') ?? document;
   const chips = document.getElementById('day-chips');
   const bars = document.getElementById('pop-bars');
-  const dataEl = document.getElementById('pop-data');
-  if (chips && bars && dataEl) {
-    const { popularByDay, todayDay, nowHour } = JSON.parse(dataEl.textContent || '{}');
 
+  // Read the data source fresh on every click so live polls (which rewrite
+  // #pop-data) are picked up without re-binding.
+  function popData() {
+    try {
+      return JSON.parse(document.getElementById('pop-data')?.textContent || '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  if (chips && bars) {
     chips.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest('button.chip') as HTMLButtonElement | null;
       if (!btn) return;
@@ -63,7 +71,10 @@ const dataJson = JSON.stringify({ popularByDay, todayDay, nowHour });
         c.classList.toggle('active', on);
         c.setAttribute('aria-pressed', on ? 'true' : 'false');
       }
-      bars.innerHTML = renderBars(popularByDay[day], day === todayDay ? nowHour : null);
+      const { popularByDay, todayDay, nowHour, scaleMax } = popData();
+      if (popularByDay?.[day]) {
+        bars.innerHTML = renderBars(popularByDay[day], day === todayDay ? nowHour : null, scaleMax || 100);
+      }
     });
   }
 </script>

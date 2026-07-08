@@ -67,10 +67,10 @@ const labs = LEVELS.map((l, i) => ({
     <div class="level-col">
       <span class="level-word" id="hero-word" style={`color:${levelColor}`}>{levelWord}</span>
       <span class="compare" id="hero-compare" style={`background:${compareBg};color:${compareColor}`}>
-        <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style={busier ? '' : 'transform:rotate(180deg)'}>
+        <svg id="hero-compare-chev" class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style={busier ? '' : 'transform:rotate(180deg)'}>
           <path d="M6 15l6-6 6 6"></path>
         </svg>
-        {compareText}
+        <span id="hero-compare-text">{compareText}</span>
       </span>
     </div>
   </div>

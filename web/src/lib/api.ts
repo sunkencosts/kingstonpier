@@ -34,12 +34,12 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'https://api.kingstonpier.ca
 export const STALE_AFTER_MS = 6 * 60 * 1000;
 
 /**
- * Fetch the current reading. Falls back to `null` on any failure so callers can
- * keep the last-good payload and switch to the stale UI (never blank the page).
- *
- * TODO(live): flip USE_MOCK to false once api.kingstonpier.ca/now is deployed.
+ * Fetch the current reading from the live API. Returns `null` on any failure so
+ * callers keep the last-good payload and switch to the stale UI (never blank the
+ * page). Set PUBLIC_USE_MOCK=true to serve the synthetic mock instead (handy for
+ * design work with no backend running).
  */
-const USE_MOCK = true;
+const USE_MOCK = import.meta.env.PUBLIC_USE_MOCK === 'true';
 
 export async function fetchNow(): Promise<NowPayload | null> {
   if (USE_MOCK) return getMockNow();
