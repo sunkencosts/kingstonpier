@@ -1,0 +1,23 @@
+# STUB — do not install yet. The tracker/ package doesn't exist until you build
+# the CV worker. This unit is here so the deploy story is complete and the
+# install script can stamp it once tracker/worker.py lands.
+
+[Unit]
+Description=Kingston Pier CV worker (YOLO person counter -> readings)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__KP_USER__
+WorkingDirectory=__KP_DIR__
+# Nice=10 so the inference bursts yield CPU to the existing site on the Pi.
+Nice=10
+# Assumes a venv at __KP_DIR__/.venv and a `python -m tracker.worker` entrypoint
+# that samples the feeds and APPENDS rows to db/data/readings.db.
+ExecStart=__KP_DIR__/.venv/bin/python -m tracker.worker
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

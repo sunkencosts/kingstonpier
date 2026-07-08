@@ -1,0 +1,21 @@
+[Unit]
+Description=Kingston Pier API (FastAPI/uvicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__KP_USER__
+WorkingDirectory=__KP_DIR__/api
+# The API reads this SQLite file (the tracker writes it). Read-only access.
+Environment=KP_DB_PATH=__KP_DIR__/db/data/readings.db
+# Bind to loopback only: the Cloudflare Tunnel is the sole way in. Never 0.0.0.0.
+ExecStart=__KP_DIR__/api/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port __KP_PORT__
+Restart=on-failure
+RestartSec=3
+# Light hardening (the service only reads; needs no privileges or shared tmp).
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
