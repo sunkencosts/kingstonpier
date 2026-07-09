@@ -1,0 +1,24 @@
+# Runtime-only dependencies for the tracker on the Raspberry Pi (CPU / ARM64).
+#
+# Why a separate file: local dev uses uv + pyproject.toml, which pins torch and
+# torchvision to the CUDA-13 wheel index for GPU training. That index has NO
+# aarch64/CPU wheels, so `uv sync` / pyproject CANNOT be used on the Pi. Install
+# the Pi from THIS file with a plain venv + pip instead:
+#
+#   python3 -m venv tracker/.venv
+#   tracker/.venv/bin/pip install -r tracker/requirements-pi.txt
+#
+# Requirements / notes:
+#   * 64-bit Raspberry Pi OS (aarch64). PyPI ships CPU torch wheels for aarch64
+#     but not for 32-bit ARM — a 32-bit Pi would have to build torch from source.
+#   * `ultralytics` is deliberately absent: it's labelling-only (preseed) and
+#     never runs on the Pi.
+#   * The trained model `tracker/counter_model.pt` is git-ignored — copy it to
+#     the Pi separately (scp) before starting the worker.
+#   * On aarch64 the default PyPI torch wheels are CPU-only, so no special index
+#     is needed here (unlike x86_64, where the default wheel bundles CUDA).
+torch>=2.0
+torchvision>=0.15
+numpy>=1.24
+pillow>=9.0
+requests>=2.28

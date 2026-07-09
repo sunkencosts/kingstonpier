@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Convenience wrapper: run the tracker with the project's venv without typing
+# the full path. Usage:  ./beach   or   ./beach --watch 3
+cd "$(dirname "$0")" || exit 1
+exec ./.venv/bin/python crowd_tracker.py "$@"

@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule the Kingston Pier DB backup
+
+[Timer]
+# Daily at 03:30 local time. Persistent=true runs a missed backup after the Pi
+# was off/asleep at the scheduled time.
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

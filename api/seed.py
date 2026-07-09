@@ -60,6 +60,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--days", type=int, default=28, help="days of history to generate")
     ap.add_argument("--db", type=Path, default=DEFAULT_DB)
+    ap.add_argument("--force", action="store_true",
+                    help="overwrite even if the DB already has readings (destructive)")
     args = ap.parse_args()
 
     random.seed(1789)
@@ -68,6 +70,18 @@ def main() -> None:
     conn = sqlite3.connect(args.db)
     try:
         conn.executescript(SCHEMA.read_text())
+
+        # Guard: don't silently wipe a populated store. This writes to the same
+        # default path the tracker/API use, so an accidental run against the real
+        # DB would replace live readings with synthetic ones. Require --force.
+        existing = conn.execute("SELECT COUNT(*) FROM readings").fetchone()[0]
+        if existing and not args.force:
+            raise SystemExit(
+                f"Refusing to reseed: {args.db} already has {existing:,} readings.\n"
+                "This is a DEV-ONLY tool and will DELETE them. Re-run with --force "
+                "if you really mean to overwrite (or point --db at a scratch file)."
+            )
+
         conn.execute("DELETE FROM readings")  # idempotent reseed
 
         now = datetime.now(timezone.utc)

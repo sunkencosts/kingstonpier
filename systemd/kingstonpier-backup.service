@@ -1,0 +1,17 @@
+[Unit]
+Description=Kingston Pier DB backup (snapshot -> R2)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=__KP_USER__
+WorkingDirectory=__KP_DIR__
+Environment=KP_DB_PATH=__KP_DIR__/db/data/readings.db
+# Off-box target. Configure an rclone remote named to match (see deploy/README.md).
+# If rclone/KP_R2_REMOTE aren't set up yet, the backup still runs and keeps a
+# local snapshot — it just skips the upload and says so.
+Environment=KP_R2_REMOTE=r2:kingstonpier-backups
+Environment=KP_BACKUP_KEEP=14
+ExecStart=__KP_DIR__/deploy/backup_db.sh
+Nice=15

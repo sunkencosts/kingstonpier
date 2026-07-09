@@ -1,0 +1,68 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+# Never let two deploys race on the Pi.
+concurrency:
+  group: deploy-pi
+  cancel-in-progress: false
+
+jobs:
+  # The frontend (web/) is built + deployed by Cloudflare Pages' own Git
+  # integration on push — see deploy/README.md. This workflow is the Pi backend
+  # only: it deploys the API + CV worker. The DB and the trained model are
+  # git-ignored, so they are never in the checkout and CI never touches them
+  # (history persists; the model ships out-of-band via tracker/deploy_model.sh).
+  backend:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync source to the app dir
+        run: |
+          APP="$HOME/apps/kingstonpier"
+          mkdir -p "$APP"
+          # --delete keeps the app dir clean, but the excludes protect everything
+          # that lives ONLY on the Pi: the DB, both venvs, the model, the dataset.
+          rsync -a --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'web/' \
+            --exclude 'db/data/' \
+            --exclude 'api/.venv/' \
+            --exclude 'tracker/.venv/' \
+            --exclude 'tracker/dataset/' \
+            --exclude 'tracker/*.pt' \
+            ./ "$APP/"
+          echo "APP=$APP" >> "$GITHUB_ENV"
+
+      - name: API deps (tiny — every run)
+        run: |
+          cd "$APP"
+          test -d api/.venv || python3 -m venv api/.venv
+          api/.venv/bin/pip install -q -r api/requirements.txt
+
+      - name: Tracker deps (only when requirements-pi.txt changed)
+        run: |
+          cd "$APP"
+          test -d tracker/.venv || python3 -m venv tracker/.venv
+          sum=$(sha256sum tracker/requirements-pi.txt | cut -d' ' -f1)
+          marker=tracker/.venv/.reqs-sha
+          if [[ ! -f "$marker" || "$(cat "$marker")" != "$sum" ]]; then
+            echo "requirements-pi.txt changed (or first run) — installing CPU torch stack..."
+            tracker/.venv/bin/pip install -q -r tracker/requirements-pi.txt
+            echo "$sum" > "$marker"
+          else
+            echo "tracker deps unchanged — skipping the heavy torch install."
+          fi
+
+      - name: Restart services
+        run: |
+          sudo systemctl restart kingstonpier-api kingstonpier-cv-worker
+          sleep 2
+          systemctl is-active kingstonpier-api kingstonpier-cv-worker
+
+      - name: Smoke-check the API
+        run: curl -fsS --retry 5 --retry-delay 1 http://127.0.0.1:8000/healthz

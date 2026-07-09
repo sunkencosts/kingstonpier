@@ -1,0 +1,35 @@
+[project]
+name = "kingstonpier-tracker"
+version = "0.1.0"
+description = "Runtime crowd tracker + trained counter for Kingston Pier"
+requires-python = ">=3.12"
+dependencies = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "numpy>=1.24",
+    "pillow>=9.0",
+    "requests>=2.28",
+]
+
+[project.optional-dependencies]
+# Labelling pipeline only (preseed_points.py + train_counter.py's baseline)
+label = [
+    "ultralytics>=8.0.0",
+]
+
+[tool.uv]
+# Loose collection of scripts, not an installable package.
+package = false
+
+# CPU-only torch/torchvision. Training and inference both run on CPU here (no
+# usable GPU: CUDA is NVIDIA-only, and ROCm-on-WSL for the AMD card isn't worth
+# it for this tiny model). On x86_64 the default PyPI wheel bundles CUDA, so we
+# pin the explicit CPU index to keep the venv small — and closer to the Pi's.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
