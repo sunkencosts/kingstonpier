@@ -33,10 +33,6 @@ export function compareText(pct: number): string {
   return pct >= 0 ? 'Busier than usual' : 'Quieter than usual';
 }
 
-export function compareSub(pct: number, dowLong: string, daypart: string): string {
-  return `about ${Math.abs(pct)}% ${pct >= 0 ? 'above' : 'below'} a typical ${dowLong} ${daypart}`;
-}
-
 export function compareColors(pct: number): { color: string; bg: string; busier: boolean } {
   const busier = pct >= 0;
   return {

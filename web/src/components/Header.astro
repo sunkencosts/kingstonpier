@@ -14,7 +14,18 @@ const { secs } = Astro.props;
     </div>
     <div class="wordmark">
       <span class="name">Kingston&nbsp;Pier</span>
-      <span class="sub">Breakwater Park · Kingston, ON</span>
+      <a
+        class="sub"
+        href="https://www.google.com/maps/place/Gord+Downie+Memorial+Pier/@44.220924,-76.5017481,457m/data=!3m1!1e3!4m6!3m5!1s0x4cd2abbcae9992ab:0xc3aab9836ba87412!8m2!3d44.2206313!4d-76.5018545!16s%2Fg%2F11hz5vj3st?entry=ttu&g_ep=EgoyMDI2MDcwNy4wIKXMDSoASAFQAw%3D%3D"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <svg class="pin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span>Breakwater Park · Kingston, ON</span>
+      </a>
     </div>
   </div>
 
@@ -81,8 +92,20 @@ const { secs } = Astro.props;
     color: var(--heading);
   }
   .sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 11.5px;
     color: var(--muted);
+    text-decoration: none;
+    width: fit-content;
+    transition: color 0.15s ease;
+  }
+  .sub:hover {
+    color: var(--text);
+  }
+  .pin {
+    flex: none;
   }
 
   .hdr-right {

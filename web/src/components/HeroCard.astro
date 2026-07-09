@@ -8,9 +8,8 @@ interface Props {
   levelIdx: number;
   timestamp: string; // e.g. "Thu · 3:07 PM"
   comparePct: number; // signed
-  compareSub: string;
 }
-const { total, lo, hi, levelIdx, timestamp, comparePct, compareSub } = Astro.props;
+const { total, lo, hi, levelIdx, timestamp, comparePct } = Astro.props;
 
 const levelWord = LEVELS[levelIdx];
 const levelColor = LEVEL_COLORS[levelIdx];
@@ -37,53 +36,55 @@ const segs = LEVEL_COLORS.map((c, i) => {
     .join(';');
   return { i, style };
 });
-const labs = LEVELS.map((l, i) => ({
-  l,
-  style: i === levelIdx ? `font-weight:700;color:${LEVEL_COLORS[i]}` : 'font-weight:500;color:var(--muted)',
-}));
 ---
 
 <section class="card hero">
-  <div class="hero-top">
-    <span class="eyebrow">Right now on the pier</span>
-    <span class="ts" id="hero-ts">{timestamp}</span>
-  </div>
-
-  <div class="hero-main">
-    <div class="count-col">
-      <span class="count-line">
-        <span class="approx">≈</span>
-        <span class="count" id="hero-total">{total}</span>
-      </span>
-      <span class="count-cap">people on the pier - give or take a few</span>
-
+  <div class="hero-body">
+    <div class="hero-top">
+      <span class="eyebrow">Right now on the pier</span>
+      <span class="ts" id="hero-ts">{timestamp}</span>
     </div>
 
-    <div class="level-col">
-      <span class="level-word" id="hero-word" style={`color:${levelColor}`}>{levelWord}</span>
-      <span class="compare" id="hero-compare" style={`background:${compareBg};color:${compareColor}`}>
-        <svg id="hero-compare-chev" class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style={busier ? '' : 'transform:rotate(180deg)'}>
-          <path d="M6 15l6-6 6 6"></path>
-        </svg>
-        <span id="hero-compare-text">{compareText}</span>
-      </span>
-    </div>
-  </div>
+    <div class="hero-main">
+      <div class="count-col">
+        <span class="count-line">
+          <svg class="people-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="9" cy="8" r="3.4"></circle>
+            <path d="M3.5 20v-1.2a5.5 5.5 0 0 1 11 0V20"></path>
+            <path d="M16.2 5.4a3.4 3.4 0 0 1 0 6.2"></path>
+            <path d="M17.8 13.6a5.5 5.5 0 0 1 3.7 5.2V20"></path>
+          </svg>
+          <span class="count" id="hero-total">{total}</span>
+          <div class="level-col">
+            <span class="level-word" id="hero-word" style={`color:${levelColor}`}>{levelWord}</span>
+          </div>
+        </span>
+        <span class="count-cap">people on the pier - give or take a few</span>
+      </div>
 
-  <div class="compare-sub" id="hero-sub">{compareSub}</div>
-
-  <!-- Tide gauge: segments 0..idx filled with their level color, current segment glows. -->
-  <div class="tide" id="tide">
-    <div class="tide-segs">
-      {segs.map((s) => <div class="tide-seg" data-i={s.i} style={s.style} />)}
+      
     </div>
-    <div class="tide-labels">
-      {labs.map((s, i) => <span class="tide-label" data-i={i} style={s.style}>{s.l}</span>)}
+
+    <div class="stale-note" id="stale-note">
+      Showing the last known reading. Live counts resume when the feed reconnects.
     </div>
   </div>
 
-  <div class="stale-note" id="stale-note">
-    Showing the last known reading. Live counts resume when the feed reconnects.
+  <!-- Footer strip: tide gauge on the left, comparison pill on the right. -->
+  <div class="hero-footer">
+    <!-- Tide gauge: segments 0..idx filled with their level color, current segment glows. -->
+    <div class="tide" id="tide">
+      <div class="tide-segs">
+        {segs.map((s) => <div class="tide-seg" data-i={s.i} style={s.style} />)}
+      </div>
+    </div>
+
+    <span class="compare" id="hero-compare" style={`background:${compareBg};color:${compareColor}`}>
+      <svg id="hero-compare-chev" class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style={busier ? '' : 'transform:rotate(180deg)'}>
+        <path d="M6 15l6-6 6 6"></path>
+      </svg>
+      <span id="hero-compare-text">{compareText}</span>
+    </span>
   </div>
 </section>
 
@@ -91,6 +92,9 @@ const labs = LEVELS.map((l, i) => ({
   .hero {
     position: relative;
     overflow: hidden;
+    padding: 0;
+  }
+  .hero-body {
     padding: clamp(18px, 2.6vw, 24px);
   }
   .hero-top {
@@ -116,17 +120,17 @@ const labs = LEVELS.map((l, i) => ({
   }
   .count-line {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 6px;
     color: var(--heading);
   }
-  .approx {
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 500;
-    font-size: clamp(26px, 5vw, 38px);
-    line-height: 1;
-    color: var(--muted);
-    margin-top: clamp(6px, 1.4vw, 12px);
+  .people-glyph {
+    width: clamp(30px, 6vw, 44px);
+    height: clamp(30px, 6vw, 44px);
+    flex: none;
+    color: #E8863C;
+    align-self: center;
+    margin-right: 2px;
   }
   .count {
     font-family: 'Space Grotesk', sans-serif;
@@ -160,6 +164,17 @@ const labs = LEVELS.map((l, i) => ({
     gap: 10px;
     padding-bottom: 4px;
   }
+
+  /* Footer strip — a distinct band that reaches the card edges, holding the
+     tide gauge on the left and the comparison pill on the right. */
+  .hero-footer {
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 3vw, 24px);
+    padding: clamp(14px, 2vw, 18px) clamp(18px, 2.6vw, 24px);
+    border-top: 1px solid var(--border);
+    background: var(--card-2);
+  }
   .level-word {
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
@@ -168,26 +183,23 @@ const labs = LEVELS.map((l, i) => ({
     line-height: 0.92;
     letter-spacing: -0.01em;
     transition: color 0.3s ease;
+    margin-left: 2rem;
   }
   .compare {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    align-self: flex-start;
-    padding: 5px 12px;
+    flex: none;
+    padding: 6px 14px;
     border-radius: 999px;
+    border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
     font-size: 12.5px;
     font-weight: 600;
   }
 
-  .compare-sub {
-    margin-top: 9px;
-    font-size: 12.5px;
-    color: var(--muted);
-  }
-
   .tide {
-    margin-top: 20px;
+    flex: 1;
+    min-width: 0;
   }
   .tide-segs {
     display: flex;
@@ -198,17 +210,6 @@ const labs = LEVELS.map((l, i) => ({
     height: 13px;
     border-radius: 7px;
     transition: all 0.3s ease;
-  }
-  .tide-labels {
-    display: flex;
-    gap: 5px;
-    margin-top: 8px;
-  }
-  .tide-label {
-    flex: 1;
-    text-align: center;
-    font-size: 10.5px;
-    transition: color 0.3s ease;
   }
 
   /* Amber "last known reading" note — only in the stale feed state. */

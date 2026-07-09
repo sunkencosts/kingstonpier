@@ -8,7 +8,7 @@ import PopularTimes from '../components/PopularTimes.astro';
 import Footer from '../components/Footer.astro';
 import { totalLevel, loHi } from '../lib/busyness';
 import { initialNow } from '../lib/api';
-import { sceneTime, compareSub } from '../lib/format';
+import { sceneTime } from '../lib/format';
 
 // First paint renders synchronously from the synthetic mock (a realistic
 // placeholder for a static build); the client immediately fetches the live /now
@@ -23,8 +23,6 @@ const secs = Math.max(0, Math.round((Date.now() - updated.getTime()) / 1000));
 const scene = sceneTime(now.lastUpdated);
 const timestamp = scene.timestamp;
 const todayDay = scene.todayDay;
-const compareSubStr = compareSub(now.comparePct, scene.dowLong, scene.daypart);
-
 const popularCaption = 'Usually busiest around 5–6 PM on weekdays.';
 ---
 
@@ -40,7 +38,6 @@ const popularCaption = 'Usually busiest around 5–6 PM on weekdays.';
         levelIdx={idx}
         timestamp={timestamp}
         comparePct={now.comparePct}
-        compareSub={compareSubStr}
       />
       <WeatherCard weather={now.weather} />
 

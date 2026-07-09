@@ -6,7 +6,7 @@
 import { LEVELS, LEVEL_COLORS, totalLevel, loHi, DAYS, type Day } from './busyness';
 import { renderSpark } from './spark';
 import { renderBars, scaleMaxOf } from './bars';
-import { sceneTime, compareText, compareSub, compareColors } from './format';
+import { sceneTime, compareText, compareColors } from './format';
 import type { NowPayload } from './api';
 
 function setText(id: string, value: string | number): void {
@@ -23,10 +23,6 @@ function applyGauge(idx: number): void {
     el.style.background = filled ? c : 'var(--card-2)';
     el.style.border = `1px solid ${filled ? c : 'var(--border)'}`;
     el.style.boxShadow = i === idx ? `0 0 0 3px color-mix(in srgb, ${c} 32%, transparent)` : 'none';
-  });
-  tide.querySelectorAll<HTMLElement>('.tide-label').forEach((el, i) => {
-    el.style.fontWeight = i === idx ? '700' : '500';
-    el.style.color = i === idx ? LEVEL_COLORS[i] : 'var(--muted)';
   });
 }
 
@@ -58,7 +54,6 @@ export function applyNow(now: NowPayload): void {
   setText('hero-compare-text', compareText(now.comparePct));
   const chev = document.getElementById('hero-compare-chev');
   if (chev) chev.style.transform = busier ? '' : 'rotate(180deg)';
-  setText('hero-sub', compareSub(now.comparePct, scene.dowLong, scene.daypart));
 
   applyGauge(idx);
 
