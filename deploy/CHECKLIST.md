@@ -1,87 +1,98 @@
 # Go-live checklist — Pi + Cloudflare
 
-Ordered so the first automated deploy doesn't fail. Labels show where each step
-runs: 💻 dev box · ☁️ Cloudflare/GitHub dashboard · 🍓 Pi. Full detail in
-[`deploy/README.md`](README.md).
+Ordered so the first automated deploy is green. Labels: 💻 dev box · ☁️
+Cloudflare/GitHub dashboard · 🍓 Pi. Details in [`deploy/README.md`](README.md).
 
-## Phase 1 — Merge & Cloudflare (do first)
+> **App dir:** everything on the Pi lives in **`~/apps/kingstonpier`** — the path
+> the deploy workflow rsyncs to and the systemd units point at. If you cloned /
+> installed a venv somewhere else, `mv` it there before starting.
 
-- [ ] **💻 Merge the branch → `main`** (open a PR, merge it). CI (`deploy.yml`)
-      and Pages both key off `main`, and the workflow only exists on `main` once
-      merged.
-- [ ] **☁️ Cloudflare — connect the repo (Workers Builds / Static Assets):**
-      Workers & Pages → Create → **Import a repository** → this repo. Fill:
-      **Build command** `npm run build`, **Deploy command** `npx wrangler deploy`,
-      **Path** `/web`, then **Create new token** → Deploy. Serves `web/dist` as a
-      static-assets Worker (config in `web/wrangler.toml`). No env var needed —
-      the API base is baked in.
-- [ ] **☁️ Attach the custom domain:** the new Worker → Settings → Domains &
-      Routes → Add → **Custom Domain** → `kingstonpier.ca` **and**
-      `www.kingstonpier.ca`.
-- [ ] **☁️ Cloudflare R2 — create the backup target:** R2 → create bucket
-      **`kingstonpier-backups`** → create an **R2 API token** (Object Read &
-      Write). Save the access key / secret / account ID for the Pi step.
+## Phase 0 — Push to `main` first
 
-## Phase 2 — Pi bootstrap (one-time, mostly manual)
+- [ ] **💻 Commit + push all local changes to `main`.** CI reads these *from
+      `main`*, so they must be there before the runner picks up a job:
+      - `tracker/requirements-pi.txt` (the **CPU-torch fix** — else CI reinstalls
+        the CUDA/nvidia junk)
+      - `web/wrangler.toml` (Cloudflare needs it to deploy the site)
+      - `.github/workflows/deploy.yml` (the `kingstonpier` runner label)
+      - the doc updates
 
-- [ ] **🍓 Confirm 64-bit OS:** `uname -m` must print **`aarch64`** (32-bit ARM
-      can't install torch).
-- [ ] **🍓 Clone to the app dir:**
-      `git clone <repo> ~/apps/kingstonpier && cd ~/apps/kingstonpier`
-- [ ] **🍓 Create venvs:**
+## Phase 1 — Cloudflare
+
+- [ ] **☁️ Frontend (Workers Static Assets):** Workers & Pages → Create → **Import
+      a repository** → this repo. **Build** `npm run build`, **Deploy**
+      `npx wrangler deploy`, **Path** `/web`, **API token** → *Create new* →
+      Deploy. (Serves `web/dist` via `web/wrangler.toml`.)
+- [ ] **☁️ Custom domain:** that Worker → Settings → Domains & Routes → Add →
+      **Custom Domain** → `kingstonpier.ca` **and** `www.kingstonpier.ca`.
+- [ ] **☁️ R2 backup bucket:** R2 → create bucket **`kingstonpier-backups`** →
+      create an **R2 API token** (Object Read & Write). Keep the keys + account ID.
+
+## Phase 2 — Pi bootstrap (one-time; register the runner LAST)
+
+- [ ] **🍓 Confirm 64-bit OS:** `uname -m` → **`aarch64`**.
+- [ ] **🍓 App dir:** `git clone <repo> ~/apps/kingstonpier && cd ~/apps/kingstonpier`
+      (or `mv` your existing clone here).
+- [ ] **🍓 Create venvs** (needed before `install.sh` preflights them):
       ```bash
       python3 -m venv api/.venv     && api/.venv/bin/pip install -r api/requirements.txt
       python3 -m venv tracker/.venv && tracker/.venv/bin/pip install -r tracker/requirements-pi.txt
       ```
-- [ ] **💻 Copy the model to the Pi** (git-ignored, so it's not in the clone):
-      ```bash
-      scp tracker/counter_model.pt <pi>:~/apps/kingstonpier/tracker/
-      ```
-- [ ] **🍓 Time one inference pass** (the torch caveat):
-      `tracker/.venv/bin/python crowd_tracker.py --no-db` — must finish well under
-      3 min. If not, bump `--watch 3` higher in
-      `systemd/kingstonpier-cv-worker.service`.
-- [ ] **🍓 Configure rclone for R2:** `sudo apt install rclone && rclone config`
-      → new remote **named `r2`**, type `s3`, provider `Cloudflare`, your token's
-      keys, endpoint `https://<accountid>.r2.cloudflarestorage.com`, region
-      `auto`. Verify: `rclone lsd r2:`
+      `requirements-pi.txt` pins `torch==2.13.0+cpu` — **CPU only, no nvidia**.
+- [ ] **💻 Copy the model to the Pi** (git-ignored, not in the clone):
+      `scp tracker/counter_model.pt <pi>:~/apps/kingstonpier/tracker/`
+- [ ] **🍓 Time one inference pass:** `tracker/.venv/bin/python crowd_tracker.py --no-db`
+      — must finish well under 3 min (else raise `--watch 3` in the worker unit).
+- [ ] **🍓 rclone → R2:** `sudo apt install rclone && rclone config` → remote
+      **named `r2`**, type `s3`, provider `Cloudflare`, your token's keys, endpoint
+      `https://<accountid>.r2.cloudflarestorage.com`, region `auto`. Test:
+      `rclone lsd r2:`
 - [ ] **🍓 Install the services** (API + worker + backup timer):
       `bash deploy/install.sh`
 - [ ] **🍓 sudoers for CI restarts:**
       ```bash
       echo "$USER ALL=(root) NOPASSWD: $(which systemctl) restart kingstonpier-*" | sudo tee /etc/sudoers.d/kingstonpier
       ```
-- [ ] **🍓 Register the self-hosted runner** for *this* repo (GitHub → repo
-      Settings → Actions → Runners → New self-hosted runner). Install as a service
-      so it survives reboots:
+- [ ] **🍓 Register the kingstonpier runner (LAST):** it's separate from the
+      mirrorleague runner — a repo-scoped runner only serves its own repo. Get the
+      token from GitHub → repo **Settings → Actions → Runners → New self-hosted
+      runner (Linux / ARM64)**, then in its **own directory**:
       ```bash
-      cd ~/actions-runner && ./config.sh --url https://github.com/<you>/kingstonpier --token <...>
+      mkdir -p ~/actions-runner-kingstonpier && cd ~/actions-runner-kingstonpier
+      curl -o actions-runner.tar.gz -L <url-from-that-page> && tar xzf actions-runner.tar.gz
+      ./config.sh --url https://github.com/sunkencosts/kingstonpier \
+        --token <TOKEN> --name pi-kingstonpier --labels kingstonpier
       sudo ./svc.sh install && sudo ./svc.sh start
       ```
-      > A runner is per-repo — mirrorleague's won't pick these up. Same Pi, second
-      > runner is fine.
+      > The `--labels kingstonpier` **must** match `runs-on: [self-hosted,
+      > kingstonpier]` in the workflow, or the job won't be picked up.
 
-## Phase 3 — Verify end-to-end
+Once the runner starts, it grabs the pending job and deploys — green, because the
+services already exist.
 
-- [ ] **🍓 API up:** `curl -s localhost:8000/healthz`
-- [ ] **🌐 Tunnel:** `curl -s https://api.kingstonpier.ca/healthz` (from anywhere)
-- [ ] **🍓 Worker writing:** `journalctl -u kingstonpier-cv-worker -f` → a 5-feed
-      pass every ~3 min; then `curl -s https://api.kingstonpier.ca/now` shows
-      `"live": true` with a real total.
-- [ ] **🌐 Dashboard:** open `https://kingstonpier.ca` → live count renders.
-- [ ] **🍓 Backup works:** `sudo systemctl start kingstonpier-backup.service` then
+## Phase 3 — Verify
+
+- [ ] **🍓 API:** `curl -s localhost:8000/healthz`
+- [ ] **🌐 Tunnel:** `curl -s https://api.kingstonpier.ca/healthz`
+- [ ] **🍓 Worker:** `journalctl -u kingstonpier-cv-worker -f` → a 5-feed pass every
+      ~3 min; then `curl -s https://api.kingstonpier.ca/now` → `"live": true`.
+- [ ] **🌐 Dashboard:** `https://kingstonpier.ca` renders the live count.
+- [ ] **🍓 Backup:** `sudo systemctl start kingstonpier-backup.service` then
       `rclone ls r2:kingstonpier-backups` (a `.gz` appears);
-      `systemctl list-timers kingstonpier-backup` shows the nightly schedule.
+      `systemctl list-timers kingstonpier-backup` shows the nightly run.
 
-## Phase 4 — Ongoing (no more manual deploys)
+## Phase 4 — Ongoing (automatic)
 
-- [ ] **Code:** push to `main` → runner redeploys the Pi + Pages rebuilds. ✅
-- [ ] **New model:** retrain on 💻, then `tracker/deploy_model.sh <user@pi>` (scp
-      + restart). The DB and model are never touched by CI.
+- [ ] **Code:** push to `main` → the kingstonpier runner redeploys the Pi;
+      Cloudflare rebuilds the site. ✅
+- [ ] **New model:** retrain on 💻, then `tracker/deploy_model.sh <user@pi>`. CI
+      never touches the DB or model.
 
 ## Watch-outs
 
-- The very first push-to-`main` may show a red CI run if the runner/units weren't
-  ready yet — just re-run it after Phase 2.
+- The runner **must** be labelled `kingstonpier` (repo-scoped runners already
+  can't cross over, but the label makes it explicit + future-proofs org runners).
+- Two runners on one Pi can run jobs concurrently — negligible for occasional
+  deploys.
 - Once real data accumulates, retune `web/src/lib/busyness.ts` thresholds — they
   were set to the synthetic scale (a ~120-people reading pegged "packed").

@@ -37,8 +37,13 @@ CI only *updates* an already-set-up box, so do this once by hand.
 
 ```bash
 # a) Self-hosted runner for THIS repo (GitHub → repo Settings → Actions → Runners
-#    → New self-hosted runner). Install it as a service so it survives reboots:
-cd ~/actions-runner && ./config.sh --url https://github.com/<you>/kingstonpier --token <...>
+#    → New self-hosted runner). A repo-scoped runner only serves its own repo, so
+#    this is separate from any mirrorleague runner — use its own directory. The
+#    'kingstonpier' label MUST match `runs-on: [self-hosted, kingstonpier]`.
+mkdir -p ~/actions-runner-kingstonpier && cd ~/actions-runner-kingstonpier
+# (download + extract the runner tarball per the GitHub page, then:)
+./config.sh --url https://github.com/<you>/kingstonpier --token <...> \
+  --name pi-kingstonpier --labels kingstonpier
 sudo ./svc.sh install && sudo ./svc.sh start
 
 # b) Let the runner restart the services without a password prompt:

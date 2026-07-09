@@ -16,7 +16,10 @@ jobs:
   # git-ignored, so they are never in the checkout and CI never touches them
   # (history persists; the model ships out-of-band via tracker/deploy_model.sh).
   backend:
-    runs-on: self-hosted
+    # The 'kingstonpier' label pins this to the Pi runner registered for THIS
+    # repo (register it with `--labels kingstonpier`), so it can never run on the
+    # mirrorleague runner and vice-versa.
+    runs-on: [self-hosted, kingstonpier]
     steps:
       - uses: actions/checkout@v4
 
