@@ -138,12 +138,18 @@ worker writes), gzips it, keeps a small rotated local cache, and uploads to R2 v
 
 ```bash
 # 1) In the Cloudflare dashboard: R2 → create bucket "kingstonpier-backups",
-#    then create an R2 API token (Object Read & Write).
-# 2) Install + configure rclone on the Pi with an S3-compatible remote named "r2":
-sudo apt install rclone   # or: curl https://rclone.org/install.sh | sudo bash
+#    then create an R2 API token (Object Read & Write, scoped to that bucket).
+# 2) Install a CURRENT rclone — NOT `apt install rclone` (Raspbian ships an
+#    ancient v1.60 whose R2 errors are opaque). Use the official build:
+curl https://rclone.org/install.sh | sudo bash
+# 3) Configure an S3 remote named "r2":
 rclone config
 #    type = s3 ; provider = Cloudflare ; access_key_id / secret_access_key from the token ;
 #    endpoint = https://<accountid>.r2.cloudflarestorage.com ; region = auto
+# 4) REQUIRED for a bucket-scoped token: skip rclone's bucket-existence check.
+#    Without this, uploads fail with `CreateBucket ... AccessDenied` (403) —
+#    the object token can write objects but can't create buckets.
+rclone config update r2 no_check_bucket true
 ```
 
 The `kingstonpier-backup.service` sets `KP_R2_REMOTE=r2:kingstonpier-backups`

@@ -43,10 +43,13 @@ Cloudflare/GitHub dashboard · 🍓 Pi. Details in [`deploy/README.md`](README.m
       `scp tracker/counter_model.pt <pi>:~/apps/kingstonpier/tracker/`
 - [ ] **🍓 Time one inference pass:** `tracker/.venv/bin/python tracker/crowd_tracker.py --no-db`
       — must finish well under 3 min (else raise `--watch 3` in the worker unit).
-- [ ] **🍓 rclone → R2:** `sudo apt install rclone && rclone config` → remote
-      **named `r2`**, type `s3`, provider `Cloudflare`, your token's keys, endpoint
-      `https://<accountid>.r2.cloudflarestorage.com`, region `auto`. Test:
-      `rclone lsd r2:`
+- [ ] **🍓 rclone → R2:** install a CURRENT rclone (**not** `apt`, which is
+      v1.60 with opaque R2 errors): `curl https://rclone.org/install.sh | sudo bash`.
+      Then `rclone config` → remote **named `r2`**, type `s3`, provider `Cloudflare`,
+      your token's keys, endpoint `https://<accountid>.r2.cloudflarestorage.com`,
+      region `auto`. **Then** (required for a bucket-scoped token, or uploads 403 on
+      `CreateBucket`): `rclone config update r2 no_check_bucket true`. Test the write:
+      `echo ok>/tmp/t && rclone copy /tmp/t r2:kingstonpier-backups/ && echo OK`
 - [ ] **🍓 Install the services** (API + worker + backup timer):
       `bash deploy/install.sh`
 - [ ] **🍓 sudoers for CI restarts:**
