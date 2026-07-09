@@ -34,11 +34,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_RANGES = {"24h": timedelta(hours=24), "7d": timedelta(days=7), "30d": timedelta(days=30)}
+_RANGES = {
+    "24h": timedelta(hours=24),
+    "7d": timedelta(days=7),
+    "30d": timedelta(days=30),
+}
 
 
 def _cache(response: Response, seconds: int) -> None:
     response.headers["Cache-Control"] = f"public, max-age={seconds}"
+
+
+def _edge_cache(response: Response, seconds: int) -> None:
+    response.headers["Cache-Control"] = f"public, max-age=0, s-maxage={seconds}"
 
 
 def _age_seconds(ts_iso: str) -> float:
@@ -57,7 +65,7 @@ def _downsample(points: list, target: int = 600) -> list:
 
 @app.get("/now", response_model=NowResponse)
 def now(response: Response) -> NowResponse:
-    _cache(response, cfg.now_cache)
+    _edge_cache(response, cfg.now_cache)
     now_local = datetime.now(KINGSTON_TZ)
     now_hour = now_local.hour
 
@@ -69,7 +77,9 @@ def now(response: Response) -> NowResponse:
     typical_today = popular[DAYS[now_local.weekday()]]
 
     latest_total = latest.total if latest else None
-    trend = aggregate.todays_trend(samples, KINGSTON_TZ, now_local, latest_total, typical_today)
+    trend = aggregate.todays_trend(
+        samples, KINGSTON_TZ, now_local, latest_total, typical_today
+    )
     total = latest_total if latest_total is not None else 0
     compare = aggregate.compare_pct(total, typical_today, now_hour)
 
@@ -125,4 +135,8 @@ def get_weather(response: Response):
 def healthz():
     """Liveness + whether a readings DB is currently reachable with data."""
     latest = db.latest(cfg.db_path)
-    return {"ok": True, "hasData": latest is not None, "latest": latest.ts if latest else None}
+    return {
+        "ok": True,
+        "hasData": latest is not None,
+        "latest": latest.ts if latest else None,
+    }
