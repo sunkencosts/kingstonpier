@@ -32,6 +32,14 @@ DENS_W, DENS_H = INPUT_W // STRIDE, INPUT_H // STRIDE  # 64 x 36
 SIGMA = 1.5          # Gaussian spread of each point, in density-map pixels
 DENS_SCALE = 100.0   # scale density up so MSE gradients aren't vanishingly small
 
+# Frames dimmer than this mean grayscale value (0-255) are near-black night/IR
+# and carry no reliable count — the beach is only countable in daylight (README
+# "night frames are near-black infrared"). Tuned from the labelled set: the night
+# cluster sits at luma <=40, legible dusk frames at >=48, so 45 splits them
+# cleanly. Used both to gate inference (count_image) and to drop dark frames from
+# training/validation (load_samples).
+DARK_LUMA_THRESHOLD = 45.0
+
 # ImageNet stats for the pretrained backbone.
 _MEAN = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
 _STD = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
@@ -47,8 +55,19 @@ class Sample:
     round: str            # timestamp stem, e.g. "2026-07-07T15-20-10"
 
 
+def frame_luma(img) -> float:
+    """Mean grayscale brightness (0-255) of a PIL image — the daylight signal."""
+    return float(np.asarray(img.convert("L"), dtype=np.float32).mean())
+
+
 def load_samples() -> list[Sample]:
-    """All confirmed-labelled frames (skips model-seeded candidates)."""
+    """Confirmed-labelled daylight frames.
+
+    Skips model-seeded candidates and near-black night frames (luma below
+    DARK_LUMA_THRESHOLD): a human can't count people in them, so their labels
+    are noise that only wastes the decoder head and inflates val MAE.
+    """
+    from PIL import Image
     out = []
     for img in sorted(IMAGES_DIR.glob("**/*.jpg")):
         rel = img.relative_to(IMAGES_DIR)
@@ -57,6 +76,8 @@ def load_samples() -> list[Sample]:
             continue
         d = json.loads(pf.read_text())
         if d.get("candidate"):      # not yet confirmed by a human
+            continue
+        if frame_luma(Image.open(img)) < DARK_LUMA_THRESHOLD:   # too dark to count
             continue
         out.append(Sample(
             image_path=img, points=d.get("points", []),
@@ -144,12 +165,19 @@ def load_counter():
 
 
 @torch.no_grad()
-def count_image(jpeg_or_pil) -> int:
-    """People count for one frame (JPEG bytes or a PIL image)."""
+def count_image(jpeg_or_pil) -> int | None:
+    """People count for one frame (JPEG bytes or a PIL image).
+
+    Returns None when the frame is too dark to count (near-black night/IR): the
+    model would otherwise hallucinate a count off reflections and streetlights,
+    so the caller should record "no reading" rather than a fabricated number.
+    """
     import io
     from PIL import Image
     img = (jpeg_or_pil if isinstance(jpeg_or_pil, Image.Image)
            else Image.open(io.BytesIO(jpeg_or_pil))).convert("RGB")
+    if frame_luma(img) < DARK_LUMA_THRESHOLD:
+        return None
     x = torch.from_numpy(
         np.asarray(img.resize((INPUT_W, INPUT_H)), dtype=np.float32) / 255.0
     ).permute(2, 0, 1)

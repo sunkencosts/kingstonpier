@@ -14,6 +14,7 @@ previous run and tells you whether to deploy or roll back — see the tracker
 README "Retraining & deploying" section.
 """
 import argparse
+import hashlib
 import json
 import random
 import shutil
@@ -78,16 +79,37 @@ class Frames(Dataset):
         return x, torch.from_numpy(dens)[None], torch.tensor(count)
 
 
-def split_by_round(samples: list[Sample], n_val_rounds: int = 2):
+def _round_hash(r: str) -> str:
+    """Stable hash of a round timestamp (process-independent, unlike hash())."""
+    return hashlib.sha1(r.encode()).hexdigest()
+
+
+def split_by_round(samples: list[Sample], n_val_rounds: int = 2,
+                   val_rounds: list[str] | None = None):
+    """Split into train / val by whole collection rounds.
+
+    The default holdout is the ``n_val_rounds`` rounds with the smallest stable
+    hash. Unlike an index-based (evenly-spaced) split, a round's train/val label
+    depends only on its own timestamp, so labelling *more* frames doesn't
+    reshuffle the holdout — val MAE stays comparable run-to-run. Pass explicit
+    ``val_rounds`` to pin an exact holdout (e.g. to compare two models on the
+    identical frames); the last run's rounds are printed and logged for this.
+    """
     rounds = sorted({s.round for s in samples})
-    if len(rounds) <= n_val_rounds:
-        raise SystemExit(f"Need more than {n_val_rounds} rounds; have {len(rounds)}.")
-    # Evenly spaced holdout rounds, so val spans different times of day.
-    idx = np.linspace(0, len(rounds) - 1, n_val_rounds + 2)[1:-1].round().astype(int)
-    val_rounds = {rounds[i] for i in idx}
-    train = [s for s in samples if s.round not in val_rounds]
-    val = [s for s in samples if s.round in val_rounds]
-    return train, val, sorted(val_rounds)
+    if val_rounds:
+        chosen = set(val_rounds)
+        missing = chosen - set(rounds)
+        if missing:
+            raise SystemExit(f"--val-rounds not in the data: {', '.join(sorted(missing))}")
+    else:
+        if len(rounds) <= n_val_rounds:
+            raise SystemExit(f"Need more than {n_val_rounds} rounds; have {len(rounds)}.")
+        chosen = set(sorted(rounds, key=_round_hash)[:n_val_rounds])
+    train = [s for s in samples if s.round not in chosen]
+    val = [s for s in samples if s.round in chosen]
+    if not train or not val:
+        raise SystemExit("Split left train or val empty; check --val-rounds.")
+    return train, val, sorted(chosen)
 
 
 @torch.no_grad()
@@ -120,6 +142,10 @@ def main() -> int:
     ap.add_argument("--patience", type=int, default=30, help="early-stop patience")
     ap.add_argument("--no-baseline", action="store_true",
                     help="skip the (slow) detector baseline comparison")
+    ap.add_argument("--val-rounds", nargs="+", metavar="ROUND",
+                    help="hold out these exact round timestamps for validation "
+                         "(default: a stable hash-based holdout). Pass the same "
+                         "rounds across runs for directly comparable val MAE.")
     args = ap.parse_args()
 
     random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
@@ -128,7 +154,7 @@ def main() -> int:
     samples = load_samples()
     if len(samples) < 10:
         raise SystemExit(f"Only {len(samples)} labelled frames; label more first.")
-    train_s, val_s, val_rounds = split_by_round(samples)
+    train_s, val_s, val_rounds = split_by_round(samples, val_rounds=args.val_rounds)
     print(f"{len(samples)} frames: {len(train_s)} train / {len(val_s)} val")
     print(f"held-out rounds: {', '.join(val_rounds)}\n")
 

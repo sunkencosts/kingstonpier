@@ -16,7 +16,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 HOST="${1:-${KP_PI_HOST:-}}"
-PI_DIR="${KP_PI_DIR:-~/kingstonpier}"   # ~ is expanded by the remote shell
+PI_DIR="${KP_PI_DIR:-~/apps/kingstonpier}"   # ~ is expanded by the remote shell
 MODEL="counter_model.pt"
 
 if [[ -z "$HOST" ]]; then

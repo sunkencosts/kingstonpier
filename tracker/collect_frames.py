@@ -12,30 +12,42 @@ Usage:
     python collect_frames.py --watch 15 --rounds 20   # 20 rounds then stop
 """
 import argparse
+import io
 import sys
 import time
 from datetime import datetime
 
+from PIL import Image
+
 from feeds import FEEDS, fetch_frame, slug, HERE
+from counter_model import DARK_LUMA_THRESHOLD, frame_luma
 
 IMAGES_DIR = HERE / "dataset" / "images"
 
 
 def grab_round() -> int:
-    """Fetch one frame from every feed; return how many were saved."""
+    """Fetch one frame from every feed; return how many were saved.
+
+    Near-black night frames are skipped — they're dropped from training anyway
+    (see DARK_LUMA_THRESHOLD), so there's no point collecting or labelling them.
+    """
     stamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-    saved = 0
+    saved = dark = 0
     for name, oid in FEEDS:
-        out_dir = IMAGES_DIR / slug(name)
-        out_dir.mkdir(parents=True, exist_ok=True)
         try:
             frame = fetch_frame(oid)
         except Exception as exc:  # noqa: BLE001 - one dead feed shouldn't sink the rest
             print(f"  {name:8} | (unavailable: {exc})", file=sys.stderr)
             continue
+        if frame_luma(Image.open(io.BytesIO(frame))) < DARK_LUMA_THRESHOLD:
+            dark += 1
+            continue
+        out_dir = IMAGES_DIR / slug(name)
+        out_dir.mkdir(parents=True, exist_ok=True)
         (out_dir / f"{stamp}.jpg").write_bytes(frame)
         saved += 1
-    print(f"{stamp}  saved {saved}/{len(FEEDS)} feeds -> {IMAGES_DIR}")
+    tail = f" ({dark} too dark, skipped)" if dark else ""
+    print(f"{stamp}  saved {saved}/{len(FEEDS)} feeds -> {IMAGES_DIR}{tail}")
     return saved
 
 

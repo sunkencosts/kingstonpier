@@ -20,6 +20,7 @@ import sys
 
 from feeds import HERE
 from detector import get_model, person_class_ids
+from counter_model import DARK_LUMA_THRESHOLD, frame_luma
 
 IMAGES_DIR = HERE / "dataset" / "images"
 POINTS_DIR = HERE / "dataset" / "points"
@@ -52,7 +53,7 @@ def main() -> int:
 
     model = get_model()  # bundled VisDrone default
     person_ids = person_class_ids(model)
-    seeded = skipped = 0
+    seeded = skipped = dark = 0
     for img_path in images:
         rel = img_path.relative_to(IMAGES_DIR)
         out = (POINTS_DIR / rel).with_suffix(".json")
@@ -60,6 +61,9 @@ def main() -> int:
             skipped += 1
             continue
         image = Image.open(img_path).convert("RGB")
+        if frame_luma(image) < DARK_LUMA_THRESHOLD:   # too dark to count/label
+            dark += 1
+            continue
         result = model.predict(image, classes=person_ids, conf=args.conf,
                                imgsz=args.imgsz, iou=0.6, augment=True, verbose=False)[0]
         pts = points_from_boxes(result.boxes)
@@ -73,7 +77,8 @@ def main() -> int:
         seeded += 1
         print(f"  seeded {len(pts):3d} pts -> {rel}")
 
-    print(f"\nSeeded {seeded} images, skipped {skipped} already-labelled. "
+    dark_note = f", {dark} too dark" if dark else ""
+    print(f"\nSeeded {seeded} images, skipped {skipped} already-labelled{dark_note}. "
           f"Now run: python label_points.py")
     return 0
 

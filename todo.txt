@@ -1,0 +1,5 @@
+- connect to prod database in dbeaver and delete old data (nighttime ruins things)
+- keep labelling 
+- clean up the ui. broken flex on mobile.
+- add a bit of a "how we do this".
+- link to the real webcam site.

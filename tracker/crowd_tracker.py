@@ -30,11 +30,15 @@ def do_one(write: bool) -> int:
     counts: dict[str, int] = {}
     for name, oid in FEEDS:
         try:
-            counts[name] = count_image(fetch_frame(oid))
+            c = count_image(fetch_frame(oid))
         except Exception as exc:  # noqa: BLE001 - one dead feed shouldn't sink the rest
             print(f"  {name:8} |  (unavailable: {exc})", file=sys.stderr)
             continue
-        print(f"  {name:8} |  {counts[name]:3d} people")
+        if c is None:            # too dark to count — record no reading, not a guess
+            print(f"  {name:8} |  (dark, skipped)")
+            continue
+        counts[name] = c
+        print(f"  {name:8} |  {c:3d} people")
 
     total = sum(counts.values())
     partial = "" if len(counts) == len(FEEDS) else f" (from {len(counts)}/{len(FEEDS)} feeds)"
@@ -55,7 +59,8 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.image:
-        print(f"{args.image}: {count_image(open(args.image, 'rb').read())} people")
+        c = count_image(open(args.image, "rb").read())
+        print(f"{args.image}: " + ("too dark to count" if c is None else f"{c} people"))
         return 0
 
     write = not args.no_db

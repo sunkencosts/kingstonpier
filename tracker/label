@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Convenience wrapper for the labelling loop, mirroring ./beach. Seeds candidate
+# head-points for any new frames (from the detector), then opens the browser
+# labeller so you correct the guesses. Usage:
+#   ./label              # preseed new frames -> label
+#   ./label --collect    # grab one fresh round of frames first, then preseed -> label
+#   ./label --conf 0.15  # extra args pass through to preseed (e.g. seed more)
+#
+# Collect variety over time separately (this only grabs one round):
+#   ./.venv/bin/python collect_frames.py --watch 15
+cd "$(dirname "$0")" || exit 1
+
+if [[ "${1:-}" == "--collect" ]]; then
+  shift
+  ./.venv/bin/python collect_frames.py || exit 1
+fi
+
+./.venv/bin/python preseed_points.py "$@" || exit 1
+exec ./.venv/bin/python label_points.py

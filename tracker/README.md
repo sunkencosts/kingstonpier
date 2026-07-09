@@ -86,13 +86,19 @@ uv sync --extra label                        # preseed needs ultralytics (labell
 ./.venv/bin/python train_counter.py
 ```
 
+Steps 2–3 are wrapped by `./label` (mirrors `./beach`): it pre-seeds any new
+frames, then opens the labeller. `./label --collect` grabs one fresh round
+first; extra args pass through to the pre-seeder (e.g. `./label --conf 0.15`).
+
 Everything lands under `dataset/` (git-ignored): frames in `dataset/images/`,
 one JSON of points per frame in `dataset/points/`. Pre-seeding places the people
 a detector *can* find (orange `•` candidates) so you mostly add the lying-down
-folks it missed. On WSL2, open the labeller in your Windows browser via
-`localhost`; unlabelled frames sort first, and `A`/`D` move between them and
-autosave. Aim for ~50–100 varied frames (crowd levels / times of day); the fixed
-camera angle means that's enough.
+folks it missed. Near-black night frames are skipped at collection and
+pre-seeding (same `DARK_LUMA_THRESHOLD` the counter trains on), so you never
+label a frame training would discard. On WSL2, open the labeller in your Windows
+browser via `localhost`; unlabelled frames sort first, and `A`/`D` move between
+them and autosave. Aim for ~50–100 varied frames (crowd levels / times of day);
+the fixed camera angle means that's enough.
 
 `train_counter.py` reports its held-out error next to a YOLO detector's on the
 same frames, so you can see it's actually better. It's a frozen MobileNetV3
@@ -143,9 +149,11 @@ rollback, not a version history).
 | `counter_model.py` | Density model, density-map maths, data loading, inference |
 | `db.py` | The `readings` SQLite store (the API contract) |
 | `feeds.py` | Feed list + snapshot fetcher (dependency-light) |
-| `collect_frames.py` | Save raw frames into `dataset/` |
+| `collect_frames.py` | Save raw frames into `dataset/` (skips near-black frames) |
 | `label_points.py` | Browser point-click labeller |
-| `preseed_points.py` | Seed candidate points from a detector |
+| `preseed_points.py` | Seed candidate points from a detector (skips near-black frames) |
+| `./label` | Wrapper: pre-seed new frames → open the labeller (`--collect` grabs a round first) |
+| `./beach` | Wrapper: run the sampling worker with the project venv |
 | `detector.py` | YOLO — used **only** for pre-seeding and the training baseline |
 | `train_counter.py` | Train / validate the density counter; verdict + `.prev.pt` backup |
 | `deploy_model.sh` | Push a new `counter_model.pt` to the Pi + restart the worker |
@@ -165,5 +173,9 @@ weights are missing.
 - Source frames are only 640×360, so very small, hazy figures far across the
   water can still be missed — a hard floor the model can't fully clear.
 - Night frames are near-black infrared; counts are only meaningful in daylight.
+  The tracker gates on mean frame brightness (`DARK_LUMA_THRESHOLD` in
+  `counter_model.py`): dark feeds record no reading rather than a hallucinated
+  count, and dark frames are dropped from training/validation. At night, when
+  every feed is dark, no row is written and the API's "live" flag goes false.
 - Busy-ness labels, trends, and "popular times" are the API/frontend's job — the
   tracker only produces the raw integer counts.
