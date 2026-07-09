@@ -7,10 +7,10 @@ the label. Points are saved as one JSON file per image under dataset/points/,
 ready to train a crowd-density counter.
 
 Run:
-    python label_points.py                 # serve dataset/images on :8000
+    python label_points.py                 # serve dataset/images on :8100
     python label_points.py --port 8080
 
-Then open http://localhost:8000 in a browser. On WSL2 your Windows browser
+Then open http://localhost:8100 in a browser. On WSL2 your Windows browser
 reaches it via localhost. Keys: A/D or arrows = prev/next image, they autosave.
 """
 import argparse
@@ -221,7 +221,8 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Point-and-click crowd labeller.")
-    parser.add_argument("--port", type=int, default=8000)
+    # 8100 keeps the labeller clear of the dev API's default :8000 (see dev.sh).
+    parser.add_argument("--port", type=int, default=8100)
     args = parser.parse_args()
 
     if not IMAGES_DIR.exists():

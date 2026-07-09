@@ -5,6 +5,7 @@ import HeroCard from '../components/HeroCard.astro';
 import WeatherCard from '../components/WeatherCard.astro';
 import TrendChart from '../components/TrendChart.astro';
 import PopularTimes from '../components/PopularTimes.astro';
+import MethodCard from '../components/MethodCard.astro';
 import Footer from '../components/Footer.astro';
 import { totalLevel, loHi } from '../lib/busyness';
 import { initialNow } from '../lib/api';
@@ -51,6 +52,8 @@ const popularCaption = 'Usually busiest around 5–6 PM on weekdays.';
           caption={popularCaption}
         />
       </div>
+
+      <MethodCard />
     </div>
 
     <Footer secs={secs} />

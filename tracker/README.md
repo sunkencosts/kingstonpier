@@ -28,8 +28,8 @@ Counting is done by a small **density model** trained on this camera's own
 frames (see the labelling pipeline below). It predicts a density map that sums
 to the person count, which — unlike an object detector — reliably counts the
 **sitting/lying sunbathers** and **small distant figures** a busy beach is full
-of. On the first 50 labelled frames it hit ~3.5 people/frame error on held-out
-timestamps, versus ~14 for a YOLO detector. Retrain any time with more data by
+of. On 268 labelled frames it hit ~0.8 people/frame error on held-out
+timestamps, versus ~2.8 for a YOLO detector. Retrain any time with more data by
 re-running `train_counter.py`.
 
 ## Setup
@@ -80,7 +80,7 @@ uv sync --extra label                        # preseed needs ultralytics (labell
 ./.venv/bin/python preseed_points.py
 
 # 3. Label in the browser: click each head, click a dot to remove it
-./.venv/bin/python label_points.py           # open http://localhost:8000
+./.venv/bin/python label_points.py           # open http://localhost:8100
 
 # 4. Train (holds out 2 rounds to validate, saves counter_model.pt)
 ./.venv/bin/python train_counter.py
