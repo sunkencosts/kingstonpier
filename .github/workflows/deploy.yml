@@ -68,4 +68,7 @@ jobs:
           systemctl is-active kingstonpier-api kingstonpier-cv-worker
 
       - name: Smoke-check the API
-        run: curl -fsS --retry 5 --retry-delay 1 http://127.0.0.1:8000/healthz
+        # --retry-connrefused is required: uvicorn takes a few seconds to bind
+        # after systemd reports the unit active, and plain --retry does NOT retry
+        # connection-refused, so without it curl exits 7 on the first attempt.
+        run: curl -fsS --retry 10 --retry-delay 2 --retry-connrefused http://127.0.0.1:8000/healthz
