@@ -52,8 +52,9 @@ loop, and `deploy/README.md` for the Pi services (confirm a 5-feed pass fits the
 Starts all three tiers wired together and streams their prefixed logs. Open
 **http://localhost:4321** — the first tracker pass takes ~10-20s, then the
 dashboard flips from "stale" to a live count from your local API. `Ctrl+C` stops
-everything. It creates `web/.env` (git-ignored) pointing the dashboard at the
-local API. One-time setup per tier (`uv sync` in `tracker/`, a venv in `api/`,
+everything. It creates `web/.env.development` (git-ignored) pointing the
+dashboard at the local API — `astro build` ignores that file, so the dev URL
+never leaks into a production deploy. One-time setup per tier (`uv sync` in `tracker/`, a venv in `api/`,
 `npm install` in `web/`) — `dev.sh` preflights and tells you the exact command if
 anything's missing. Override the API port with `KP_API_PORT=8001 ./dev.sh`.
 

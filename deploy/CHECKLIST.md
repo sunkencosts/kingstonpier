@@ -41,7 +41,7 @@ Cloudflare/GitHub dashboard · 🍓 Pi. Details in [`deploy/README.md`](README.m
       `requirements-pi.txt` pins `torch==2.13.0+cpu` — **CPU only, no nvidia**.
 - [ ] **💻 Copy the model to the Pi** (git-ignored, not in the clone):
       `scp tracker/counter_model.pt <pi>:~/apps/kingstonpier/tracker/`
-- [ ] **🍓 Time one inference pass:** `tracker/.venv/bin/python crowd_tracker.py --no-db`
+- [ ] **🍓 Time one inference pass:** `tracker/.venv/bin/python tracker/crowd_tracker.py --no-db`
       — must finish well under 3 min (else raise `--watch 3` in the worker unit).
 - [ ] **🍓 rclone → R2:** `sudo apt install rclone && rclone config` → remote
       **named `r2`**, type `s3`, provider `Cloudflare`, your token's keys, endpoint

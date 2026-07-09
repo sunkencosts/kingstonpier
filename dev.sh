@@ -36,20 +36,31 @@ fi
 [[ "$fail" == 0 ]] || { echo "Fix the above, then re-run ./dev.sh" >&2; exit 1; }
 
 # --- point the dashboard at the LOCAL API -----------------------------------
-# Vite only reads PUBLIC_* from a .env file (not inline env vars), so we manage
-# web/.env. Self-correct the port so `KP_API_PORT=… ./dev.sh` stays consistent.
+# Use web/.env.development, NOT web/.env: Astro/Vite loads `.env.development`
+# only in dev mode (`astro dev`) and IGNORES it during `astro build`, so this
+# localhost URL can never leak into a production bundle. (web/.env, by contrast,
+# IS read by build — an earlier version wrote it and baked http://localhost into
+# a deploy. We migrate any such leftover away below.)
+ENVFILE="$ROOT/web/.env.development"
 DESIRED="PUBLIC_API_BASE=http://localhost:$API_PORT"
-if [[ ! -f "$ROOT/web/.env" ]]; then
-  echo "$DESIRED" > "$ROOT/web/.env"
-  echo "[dev] wrote web/.env -> $DESIRED"
-elif grep -qiE '^PUBLIC_API_BASE=https?://localhost:' "$ROOT/web/.env"; then
-  if ! grep -qxF "$DESIRED" "$ROOT/web/.env"; then
-    sed -i -E "s#^PUBLIC_API_BASE=https?://localhost:[0-9]+.*#$DESIRED#" "$ROOT/web/.env"
-    echo "[dev] updated web/.env -> $DESIRED"
+
+# One-time migration: a stale dev-written web/.env poisons `npm run build`.
+if [[ -f "$ROOT/web/.env" ]] && grep -qiE '^PUBLIC_API_BASE=https?://localhost:' "$ROOT/web/.env"; then
+  rm -f "$ROOT/web/.env"
+  echo "[dev] removed stale web/.env (dev URL now lives in .env.development, which build ignores)"
+fi
+
+if [[ ! -f "$ENVFILE" ]]; then
+  echo "$DESIRED" > "$ENVFILE"
+  echo "[dev] wrote web/.env.development -> $DESIRED"
+elif grep -qiE '^PUBLIC_API_BASE=https?://localhost:' "$ENVFILE"; then
+  if ! grep -qxF "$DESIRED" "$ENVFILE"; then
+    sed -i -E "s#^PUBLIC_API_BASE=https?://localhost:[0-9]+.*#$DESIRED#" "$ENVFILE"
+    echo "[dev] updated web/.env.development -> $DESIRED"
   fi
 else
-  echo "[dev] ⚠  web/.env sets a non-localhost PUBLIC_API_BASE — the dashboard will"
-  echo "[dev]    poll that (possibly prod), not your local tracker. Set it to:"
+  echo "[dev] ⚠  web/.env.development sets a non-localhost PUBLIC_API_BASE — the dashboard"
+  echo "[dev]    will poll that (possibly prod), not your local tracker. Set it to:"
   echo "[dev]    $DESIRED"
 fi
 
