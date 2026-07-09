@@ -1,0 +1,13 @@
+# Cloudflare Workers Static Assets config for the dashboard.
+#
+# The site is pure static (Astro SSG → ./dist); there is no Worker script. This
+# assets-only Worker serves ./dist, which is Cloudflare's current path for static
+# sites (the newer "Workers Builds" flow, in place of the classic Pages UI).
+#
+# Deployed by the Cloudflare build:  Build = `npm run build`, Deploy =
+# `npx wrangler deploy`, Path = /web (so ./dist here resolves to web/dist).
+name = "kingstonpier"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "./dist"

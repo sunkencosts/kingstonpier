@@ -2,8 +2,8 @@
 
 The public site is two halves, deployed two ways on every push to `main`:
 
-- **Frontend** (`web/`) → **Cloudflare Pages**, built by Pages' own Git
-  integration (no Actions, no secrets).
+- **Frontend** (`web/`) → **Cloudflare** as a static-assets Worker, built by
+  Cloudflare's Git integration (no Actions, no secrets). See §4.
 - **Backend** (`api/` + `tracker/`) → the **Pi**, by a **self-hosted GitHub
   Actions runner** (`.github/workflows/deploy.yml`), same pattern as mirrorleague.
 
@@ -98,19 +98,27 @@ self-hosted runner) does the rest:
 It never touches the DB or the model. To ship a **new model**, retrain and run
 `tracker/deploy_model.sh <user@pi>` from your dev box (see the tracker README).
 
-## 4. Frontend — Cloudflare Pages (Git integration)
+## 4. Frontend — Cloudflare (Workers Static Assets, Git-connected)
 
-Connect the repo in the Cloudflare dashboard (**Workers & Pages → Create → Pages
-→ Connect to Git**), pointing at this repo:
+The dashboard is pure static (Astro SSG → `web/dist`), served as an **assets-only
+Worker** (Cloudflare's current "Workers Builds" flow; the classic Pages create UI
+is being retired). Config lives in `web/wrangler.toml` (`[assets] directory =
+"./dist"` — no Worker script).
 
-- **Production branch:** `main`
+Connect once in the dashboard (**Workers & Pages → Create → Import a
+repository**), pointing at this repo:
+
 - **Build command:** `npm run build`
-- **Build output dir:** `web/dist`
-- **Root directory:** `web`
+- **Deploy command:** `npx wrangler deploy`
+- **Path:** `/web`  (working dir → the build and `wrangler.toml` resolve here)
+- **API token:** *Create new token* (the wizard scopes it for Worker deploys)
 
-Pages then builds + deploys `web/` on every push to `main` — no Actions job, no
-secrets. The API base defaults to `https://api.kingstonpier.ca` (baked into
-`web/src/lib/api.ts`), so no Pages env var is needed; the API's CORS allowlist
+Cloudflare then builds + deploys on every push to `main` — no Actions job. After
+the first deploy, attach the domain: **the Worker → Settings → Domains & Routes →
+Add → Custom Domain →** `kingstonpier.ca` and `www.kingstonpier.ca`.
+
+The API base defaults to `https://api.kingstonpier.ca` (baked into
+`web/src/lib/api.ts`), so no build env var is needed; the API's CORS allowlist
 already includes `kingstonpier.ca`/`www.` (override via `KP_CORS_ORIGINS`).
 
 ## 5. Off-box DB backups → Cloudflare R2

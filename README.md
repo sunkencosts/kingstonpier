@@ -21,7 +21,7 @@ Raspberry Pi
   api        → FastAPI: /now /history /popular-times /weather
   cloudflared→ Cloudflare Tunnel → api.kingstonpier.ca (no open ports)
       ▼
-Cloudflare: DNS + Pages (this Astro site) + short-TTL cache on api.*
+Cloudflare: DNS + static-assets Worker (this Astro site) + short-TTL cache on api.*
       ▼
 Visitor browser polls api.kingstonpier.ca and renders the dashboard.
 ```
@@ -37,7 +37,7 @@ loop, and `deploy/README.md` for the Pi services (confirm a 5-feed pass fits the
 
 | Path        | What                                                              | Status |
 |-------------|------------------------------------------------------------------|--------|
-| `web/`      | Astro frontend (this dashboard) → Cloudflare Pages               | **built**, wired to live API |
+| `web/`      | Astro frontend (this dashboard) → Cloudflare (static-assets Worker) | **built**, wired to live API |
 | `api/`      | FastAPI read-only service behind the tunnel                      | **built** |
 | `tracker/`  | CV worker (density counter) + SQLite writer                      | **built**, works e2e |
 | `db/`       | `readings` schema — the tracker↔API contract                    | **built** |
@@ -67,7 +67,7 @@ lib pulled in — see `web/README.md` for the rationale and the uPlot swap path)
 cd web
 npm install
 npm run dev      # http://localhost:4321
-npm run build    # static output → web/dist (deploy to Cloudflare Pages)
+npm run build    # static output → web/dist (served by Cloudflare, see deploy/README.md)
 ```
 
 ### Wiring to live data
