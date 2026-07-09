@@ -56,12 +56,7 @@ const labs = LEVELS.map((l, i) => ({
         <span class="count" id="hero-total">{total}</span>
       </span>
       <span class="count-cap">people on the pier - give or take a few</span>
-      <span class="range">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M5 12h14M9 8l-4 4 4 4M15 8l4 4-4 4"></path>
-        </svg>
-        likely <span id="hero-lo">{lo}</span>–<span id="hero-hi">{hi}</span>
-      </span>
+
     </div>
 
     <div class="level-col">
@@ -94,7 +89,6 @@ const labs = LEVELS.map((l, i) => ({
 
 <style>
   .hero {
-    grid-column: 1;
     position: relative;
     overflow: hidden;
     padding: clamp(18px, 2.6vw, 24px);

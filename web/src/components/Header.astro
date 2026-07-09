@@ -159,4 +159,13 @@ const { secs } = Astro.props;
   :global([data-theme='dark']) .ico-moon {
     display: inline;
   }
+
+  /* On narrow screens the header stacks; let the status/toggle row fill the
+     width so the theme button pushes out to the far right. */
+  @media (max-width: 480px) {
+    .hdr-right {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
 </style>
