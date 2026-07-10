@@ -40,10 +40,10 @@ const popularCaption = 'Usually busiest around 5–6 PM on weekdays.';
         timestamp={timestamp}
         comparePct={now.comparePct}
       />
-      <WeatherCard weather={now.weather} />
+     
 
       <div class="charts-row">
-        <TrendChart trend={now.trend} nowHour={now.nowHour} />
+        
         <PopularTimes
           popularByDay={now.popularByDay}
           selectedDay={todayDay}
@@ -51,8 +51,9 @@ const popularCaption = 'Usually busiest around 5–6 PM on weekdays.';
           nowHour={now.nowHour}
           caption={popularCaption}
         />
+        <TrendChart trend={now.trend} nowHour={now.nowHour} />
       </div>
-
+      <WeatherCard weather={now.weather} />
       <MethodCard />
     </div>
 
