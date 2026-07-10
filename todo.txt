@@ -1,4 +1,3 @@
 - connect to prod database in dbeaver and delete old data (nighttime ruins things)
 - keep labelling 
-- add a bit of a "how we do this".
-- link to the real webcam site.
+- quick joke about the geese.
