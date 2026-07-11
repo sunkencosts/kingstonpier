@@ -42,7 +42,7 @@ const segs = LEVEL_COLORS.map((c, i) => {
   <div class="hero-body">
     <div class="hero-top">
       <span class="eyebrow">Right now on the pier</span>
-      <span class="ts" id="hero-ts">{timestamp}</span>
+      <span class="ts sk-live" id="hero-ts">{timestamp}</span>
     </div>
 
     <div class="hero-main">
@@ -54,9 +54,9 @@ const segs = LEVEL_COLORS.map((c, i) => {
             <path d="M16.2 5.4a3.4 3.4 0 0 1 0 6.2"></path>
             <path d="M17.8 13.6a5.5 5.5 0 0 1 3.7 5.2V20"></path>
           </svg>
-          <span class="count" id="hero-total">{total}</span>
+          <span class="count sk-live" id="hero-total">{total}</span>
           <div class="level-col">
-            <span class="level-word" id="hero-word" style={`color:${levelColor}`}>{levelWord}</span>
+            <span class="level-word sk-live" id="hero-word" style={`color:${levelColor}`}>{levelWord}</span>
           </div>
         </span>
         <span class="count-cap">people on the pier - give or take a few</span>
@@ -73,13 +73,13 @@ const segs = LEVEL_COLORS.map((c, i) => {
   <!-- Footer strip: tide gauge on the left, comparison pill on the right. -->
   <div class="hero-footer">
     <!-- Tide gauge: segments 0..idx filled with their level color, current segment glows. -->
-    <div class="tide" id="tide">
+    <div class="tide sk-live" id="tide">
       <div class="tide-segs">
         {segs.map((s) => <div class="tide-seg" data-i={s.i} style={s.style} />)}
       </div>
     </div>
 
-    <span class="compare" id="hero-compare" style={`background:${compareBg};color:${compareColor}`}>
+    <span class="compare sk-live" id="hero-compare" style={`background:${compareBg};color:${compareColor}`}>
       <svg id="hero-compare-chev" class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style={busier ? '' : 'transform:rotate(180deg)'}>
         <path d="M6 15l6-6 6 6"></path>
       </svg>

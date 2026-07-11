@@ -36,7 +36,7 @@ const { secs } = Astro.props;
         <span class="dot"></span>
         <span class="dot live-ping"></span>
       </span>
-      <span class="status-txt">Live · updated <span id="secs-ago">{secs}</span>s ago</span>
+      <span class="status-txt">Live · updated <span class="sk-live" id="secs-ago">{secs}</span>s ago</span>
     </div>
     <!-- Stale (shown when [data-feed="stale"]) -->
     <div class="pill status status-stale" role="status">

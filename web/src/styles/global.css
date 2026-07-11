@@ -219,6 +219,51 @@ body {
   }
 }
 
+/* ── Loading skeletons ────────────────────────────────────────────────────
+   The static HTML ships with placeholder (mock) values baked in at build time;
+   the client fetches the live /now and repaints. To avoid a flash of the
+   placeholder numbers, every live value is marked .sk-live and starts masked by
+   a shimmering skeleton while the page is [data-state="loading"]. It's revealed
+   only once real data lands ([data-state="live"]). If the very first fetch fails
+   ([data-state="error"]) the mask stays as a static, un-animated placeholder so
+   no fake numbers ever show — paired with the "Feed unavailable" pill. Without
+   JS, data-state is never set and the (mock) values render normally. */
+
+.sk-live {
+  position: relative;
+}
+.page:is([data-state='loading'], [data-state='error']) .sk-live {
+  color: transparent !important;
+}
+.page:is([data-state='loading'], [data-state='error']) .sk-live::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background-color: color-mix(in srgb, var(--muted) 20%, var(--card));
+}
+.page[data-state='loading'] .sk-live::after {
+  background-image: linear-gradient(
+    90deg,
+    transparent 20%,
+    color-mix(in srgb, var(--card) 55%, transparent) 50%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
+  animation: skShimmer 1.4s ease-in-out infinite;
+}
+.page[data-state='error'] .sk-live::after {
+  opacity: 0.5;
+}
+@keyframes skShimmer {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -150% 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bar,
   .bar-tip,
@@ -227,5 +272,8 @@ body {
   }
   .live-ping {
     animation: none !important;
+  }
+  .page[data-state='loading'] .sk-live::after {
+    animation: none;
   }
 }

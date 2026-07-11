@@ -29,6 +29,11 @@ const popularCaption = 'Usually busiest around 5–6 PM on weekdays.';
 
 <Layout>
   <main class="page" data-feed="live" data-updated={now.lastUpdated}>
+    <!-- Mask the placeholder (mock) values with a loading skeleton from the very
+         first paint, before the live /now fetch resolves. Runs inline during
+         parse so there's no flash of the baked-in numbers. Without JS the
+         attribute is never set and the values render normally. -->
+    <script is:inline>document.currentScript.closest('.page').dataset.state = 'loading';</script>
     <Header secs={secs} />
 
     <div class="bento">
@@ -96,11 +101,18 @@ const popularCaption = 'Usually busiest around 5–6 PM on weekdays.';
   async function poll() {
     const data = await fetchNow();
     if (!data) {
+      // If we've never rendered real data, drop the shimmer to a static "no
+      // data" placeholder (never reveal the mock numbers). Once we've had a
+      // successful reading, keep showing it as the last-known value instead.
+      if (page && page.dataset.state !== 'live') page.dataset.state = 'error';
       page?.setAttribute('data-feed', 'stale');
       return;
     }
     applyNow(data);
-    if (page) page.dataset.updated = data.lastUpdated;
+    if (page) {
+      page.dataset.updated = data.lastUpdated;
+      page.dataset.state = 'live'; // reveal the real values, clear the skeleton
+    }
     const age = Date.now() - new Date(data.lastUpdated).getTime();
     page?.setAttribute('data-feed', age > STALE_AFTER_MS ? 'stale' : 'live');
     tick();

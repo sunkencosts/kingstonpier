@@ -16,8 +16,8 @@ const { weather } = Astro.props;
       <path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"></path>
     </svg>
     <div class="temp-txt">
-      <span class="temp" id="wx-temp">{weather.tempC}°</span>
-      <span class="cond" id="wx-cond">{weather.condition} · feels like {weather.feelsLikeC}°</span>
+      <span class="temp sk-live" id="wx-temp">{weather.tempC}°</span>
+      <span class="cond sk-live" id="wx-cond">{weather.condition} · feels like {weather.feelsLikeC}°</span>
     </div>
   </div>
 
@@ -26,25 +26,25 @@ const { weather } = Astro.props;
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 8h11a2.5 2.5 0 1 0-2.5-2.5M3 12h15a2.5 2.5 0 1 1-2.5 2.5M3 16h9.5a2 2 0 1 1-2 2"></path>
       </svg>
-      <span><span id="wx-wind">{weather.windKmh}</span> km/h <span class="dim" id="wx-wind-dir">{weather.windDir}</span></span>
+      <span><span class="sk-live" id="wx-wind">{weather.windKmh}</span> km/h <span class="dim sk-live" id="wx-wind-dir">{weather.windDir}</span></span>
     </div>
     <div class="wx">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 3v6M9 6l3-3 3 3M4 15h2M18 15h2M7 15a5 5 0 0 1 10 0M3 20h18"></path>
       </svg>
-      <span>Rise <span class="dim" id="wx-rise">{weather.sunrise}</span></span>
+      <span>Rise <span class="dim sk-live" id="wx-rise">{weather.sunrise}</span></span>
     </div>
     <div class="wx">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
         <path d="M17 8.5A5 5 0 0 0 7 8.5M12 2v3M4 12h2M18 12h2M6 6.5l1.4 1.4M16.6 7.9L18 6.5M3 20h18M9 16h6"></path>
       </svg>
-      <span>Set <span class="dim" id="wx-set">{weather.sunset}</span></span>
+      <span>Set <span class="dim sk-live" id="wx-set">{weather.sunset}</span></span>
     </div>
     <div class="wx">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 3v18M5 10l7-7 7 7M5 10v8h14v-8"></path>
       </svg>
-      <span id="wx-lake">{weather.lake}</span>
+      <span class="sk-live" id="wx-lake">{weather.lake}</span>
     </div>
   </div>
 </section>
