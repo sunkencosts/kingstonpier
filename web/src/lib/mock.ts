@@ -5,10 +5,10 @@
 // endpoint; the busyness thresholds / colors / lo-hi math in busyness.ts are
 // the parts that stay.
 
-import { DAYS, type Day } from './busyness';
+import { DAYS, DEFAULT_CAPACITY, type Day } from './busyness';
 import type { NowPayload } from './api';
 
-const CAP = 80; // scales the 0–100 curve to a plausible pier headcount
+const CAP = 300; // scales the 0–100 curve to a plausible pier headcount
 
 // deterministic pseudo-noise so the mock is stable across renders
 function rnd(n: number): number {
@@ -66,6 +66,7 @@ export function getMockNow(): NowPayload {
     comparePct: 14,
     trend,
     nowHour,
+    capacity: DEFAULT_CAPACITY,
     popularByDay: popularByDay(),
     weather: {
       tempC: 21,

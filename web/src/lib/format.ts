@@ -29,6 +29,50 @@ export function sceneTime(iso: string): Scene {
   return { timestamp: `${dow} · ${clock}`, dow, dowLong, daypart, todayDay };
 }
 
+/** 17 → "5 PM", 12 → "12 PM", 6 → "6 AM". Shared by the bars and the caption. */
+export function hourLabel(h: number): string {
+  const hh = ((h % 24) + 24) % 24;
+  const period = hh < 12 ? 'AM' : 'PM';
+  const hr = hh % 12 === 0 ? 12 : hh % 12;
+  return `${hr} ${period}`;
+}
+
+/**
+ * The "usually busiest around …" line, derived from real weekday history rather
+ * than hard-coded. Averages Mon–Fri per hour, finds the peak, and names the
+ * peak→next-hour window. Falls back to a neutral line until data accumulates.
+ */
+export function busiestCaption(popularByDay: Record<string, number[]>): string {
+  const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  const sums = new Array(24).fill(0);
+  const counts = new Array(24).fill(0);
+  for (const d of weekdays) {
+    const arr = popularByDay[d] ?? [];
+    for (let h = 0; h < 24; h++) {
+      if (arr[h] > 0) {
+        sums[h] += arr[h];
+        counts[h] += 1;
+      }
+    }
+  }
+  let peakH = -1;
+  let peak = 0;
+  for (let h = 0; h < 24; h++) {
+    const avg = counts[h] ? sums[h] / counts[h] : 0;
+    if (avg > peak) {
+      peak = avg;
+      peakH = h;
+    }
+  }
+  if (peakH < 0) return 'Popular times will fill in as we gather more data.';
+
+  const la = hourLabel(peakH); // e.g. "5 PM"
+  const lb = hourLabel(peakH + 1); // e.g. "6 PM"
+  // Collapse a shared period ("5 PM–6 PM" → "5–6 PM"); hourLabel owns the format.
+  const range = la.slice(-2) === lb.slice(-2) ? `${la.slice(0, -3)}–${lb}` : `${la}–${lb}`;
+  return `Usually busiest around ${range} on weekdays.`;
+}
+
 export function compareText(pct: number): string {
   return pct >= 0 ? 'Busier than usual' : 'Quieter than usual';
 }

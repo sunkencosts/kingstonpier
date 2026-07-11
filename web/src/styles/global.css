@@ -97,11 +97,35 @@ body {
   align-items: start;
 }
 
+/* Desktop bento placement: the hero and weather share the top row (weather to
+   the right of the hero), popular times spans the full width of the second row,
+   and the method card fills the third. Source order (hero → popular → weather →
+   method) drives the single-column mobile stack, so weather lands third there. */
+@media (min-width: 881px) {
+  .bento > .hero {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .bento > .weather {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .bento > .charts-row {
+    grid-row: 2;
+  }
+  .bento > .method {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+}
+
+/* Popular-times chart spans the full bento width on its own row. */
 .charts-row {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(13px, 2vw, 16px);
+  align-items: start;
 }
 
 /* The mock hard-codes two columns; add the collapse the real site needs. */
@@ -120,31 +144,77 @@ body {
   height: 104px;
 }
 
+/* Each column is sized (inline) to its tallest bar so the tooltip clears it;
+   the bars themselves are anchored to the column's baseline and overlap. */
 .bar-col {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 3px;
   position: relative;
+  cursor: pointer;
 }
 
 .bar {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 74%;
   max-width: 15px;
   border-radius: 4px;
   transition: height 0.3s ease, background 0.3s ease, box-shadow 0.15s ease;
 }
-
-.bar-col {
-  cursor: pointer;
+/* Every hour is a single level-colored bar. */
+.bar-plain {
+  z-index: 1;
+}
+/* Future hours (today's rest-of-day) read as lighter "expected" bars. */
+.bar-col.is-future .bar {
+  opacity: 0.42;
+}
+/* Live hour: a wider, emphasized two-tone bar — a solid base up to the smaller
+   of now/usual, then a cap for the difference (colored inline: darker when
+   busier than usual, faded when quieter). */
+.bar-col.is-live .bar {
+  width: 96%;
+  max-width: 20px;
+}
+.bar-base {
+  z-index: 2;
+  border-radius: 0 0 4px 4px;
+}
+.bar-base.bar-solo {
+  border-radius: 4px;
+}
+.bar-cap {
+  z-index: 2;
+  border-radius: 4px 4px 0 0;
 }
 /* Widen the hit target on touch without disturbing the bar's own layout. */
 .bar-col::before {
   content: '';
   position: absolute;
   inset: -6px 0 0;
+}
+/* Selection ring: spans the FULL column height (= the taller of the overlapping
+   bars) at the bars' shared width, so hovering wraps both the actual and the
+   typical ghost — not just whichever is currently shorter. */
+.bar-col::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 74%;
+  max-width: 15px;
+  height: 100%;
+  border-radius: 4px;
+  z-index: 4;
+  pointer-events: none;
+  transition: box-shadow 0.15s ease;
+}
+/* The live hour's bar is wider — its ring must match. */
+.bar-col.is-live::after {
+  width: 96%;
+  max-width: 20px;
 }
 
 .bar-tip {
@@ -197,9 +267,9 @@ body {
 }
 /* The ring marks the bar the tooltip is on — hover, keyboard focus, or tap.
    The transition (on .bar) glides it between bars rather than flickering. */
-.bar-col:hover .bar,
-.bar-col:focus-visible .bar,
-.bar-col.show-tip .bar {
+.bar-col:hover::after,
+.bar-col:focus-visible::after,
+.bar-col.show-tip::after {
   box-shadow: 0 0 0 2px var(--card), 0 0 0 3.5px var(--text);
 }
 

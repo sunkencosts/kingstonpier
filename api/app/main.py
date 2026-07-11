@@ -82,6 +82,7 @@ def now(response: Response) -> NowResponse:
     )
     total = latest_total if latest_total is not None else 0
     compare = aggregate.compare_pct(total, typical_today, now_hour)
+    cap = aggregate.capacity(samples, cfg.capacity_prior, cfg.capacity_headroom)
 
     if latest is not None:
         live = _age_seconds(latest.ts) <= cfg.stale_after_s
@@ -96,6 +97,7 @@ def now(response: Response) -> NowResponse:
         comparePct=compare,
         trend=trend,
         nowHour=now_hour,
+        capacity=cap,
         popularByDay=popular,
         weather=weather.get_weather(),
         live=live,

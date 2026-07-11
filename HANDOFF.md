@@ -89,9 +89,14 @@ Restore onto a fresh card: see `deploy/README.md` §5.
 
 ## Open follow-ups (nice-to-have, not blocking)
 
-- **Retune busyness thresholds** — `web/src/lib/busyness.ts` was calibrated to
-  the synthetic mock scale. Once real counts accumulate, adjust `lo/hi` + the
-  color bands (a ~120 reading currently pegs "packed").
+- **Busyness scale is now capacity-relative** — the API returns a `capacity`
+  (the count that reads as "packed"), a one-way ratchet anchored at
+  `KP_CAPACITY_PRIOR` (default 500 — the physical estimate of a full pier) that
+  only rises to track a genuinely busier observed peak (`aggregate.capacity`).
+  `busyness.ts` bands and the popular-times bar heights are fractions of it, so
+  a ~150 reading now reads "Moderate", not "Packed". Tune `KP_CAPACITY_PRIOR`
+  (env) if 500 is off; the bands themselves shouldn't need re-tuning as counts
+  grow. `lo/hi` (±15%) is unchanged.
 - **Worker logging is sparse** — add `Environment=PYTHONUNBUFFERED=1` to
   `systemd/kingstonpier-cv-worker.service` if you want per-pass "sampled N feeds"
   lines in `journalctl`.

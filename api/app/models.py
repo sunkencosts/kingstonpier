@@ -25,6 +25,7 @@ class NowResponse(BaseModel):
     comparePct: int  # signed: +ve busier than typical, -ve quieter
     trend: list[int]  # 24 hourly counts for today (index = hour)
     nowHour: int
+    capacity: int  # count that reads as "packed" — full-height bar / top band
     popularByDay: dict[str, list[int]]  # {'Mon': [24], ...}
     weather: Weather
     live: bool  # false => stale / no fresh reading

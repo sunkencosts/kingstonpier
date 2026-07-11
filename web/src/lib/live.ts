@@ -3,10 +3,9 @@
 // elements in place (by id/class) so the tide-gauge and bar transitions animate
 // and there's no layout thrash — the server-rendered structure stays put.
 
-import { LEVELS, LEVEL_COLORS, totalLevel, loHi, DAYS, type Day } from './busyness';
-import { renderSpark } from './spark';
-import { renderBars, scaleMaxOf } from './bars';
-import { sceneTime, compareText, compareColors } from './format';
+import { LEVELS, LEVEL_COLORS, levelForCount, loHi, DAYS, type Day } from './busyness';
+import { renderBars, heightMaxOf } from './bars';
+import { sceneTime, compareText, compareColors, busiestCaption } from './format';
 import type { NowPayload } from './api';
 
 function setText(id: string, value: string | number): void {
@@ -27,7 +26,7 @@ function applyGauge(idx: number): void {
 }
 
 export function applyNow(now: NowPayload): void {
-  const idx = totalLevel(now.total);
+  const idx = levelForCount(now.total, now.capacity);
   const { lo, hi } = loHi(now.total);
   const scene = sceneTime(now.lastUpdated);
 
@@ -67,21 +66,21 @@ export function applyNow(now: NowPayload): void {
   setText('wx-set', w.sunset);
   setText('wx-lake', w.lake);
 
-  // Today's trend
-  const trendEl = document.getElementById('trend-svg');
-  if (trendEl) trendEl.innerHTML = renderSpark(now.trend, now.nowHour);
-
   // Popular times: refresh the switcher's data source, then repaint whichever
-  // day is currently selected (keeping the user's choice across polls).
-  const scaleMax = scaleMaxOf(now.popularByDay);
+  // day is currently selected (keeping the user's choice across polls). The
+  // caption ("usually busiest around …") is derived from the same data.
   const todayDay: Day = DAYS.includes(scene.todayDay) ? scene.todayDay : 'Thu';
+  const heightMax = heightMaxOf(now.popularByDay, now.trend);
+  setText('pop-caption', busiestCaption(now.popularByDay));
   const dataEl = document.getElementById('pop-data');
   if (dataEl) {
     dataEl.textContent = JSON.stringify({
       popularByDay: now.popularByDay,
       todayDay,
       nowHour: now.nowHour,
-      scaleMax,
+      capacity: now.capacity,
+      heightMax,
+      trend: now.trend,
     });
   }
   const chips = document.getElementById('day-chips');
@@ -98,6 +97,13 @@ export function applyNow(now: NowPayload): void {
   }
   const bars = document.getElementById('pop-bars');
   if (bars && now.popularByDay[day]) {
-    bars.innerHTML = renderBars(now.popularByDay[day], day === todayDay ? now.nowHour : null, scaleMax);
+    const isToday = day === todayDay;
+    bars.innerHTML = renderBars(
+      now.popularByDay[day],
+      isToday ? now.trend : null,
+      isToday ? now.nowHour : null,
+      now.capacity,
+      heightMax,
+    );
   }
 }

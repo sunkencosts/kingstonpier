@@ -21,6 +21,7 @@ export interface NowPayload {
   comparePct: number; // +14 => 14% busier than a typical slot; negative => quieter
   trend: number[]; // 24 hourly counts for *today* (index = hour of day)
   nowHour: number; // current hour index into `trend`
+  capacity: number; // count that reads as "packed" — full bar / top level band
   popularByDay: Record<Day, number[]>; // typical counts, 24 per weekday
   weather: WeatherNow;
   live: boolean; // false => data is stale / feed unavailable

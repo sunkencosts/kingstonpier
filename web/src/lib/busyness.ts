@@ -17,18 +17,18 @@ export const LEVEL_COLORS = [
 export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 export type Day = (typeof DAYS)[number];
 
-/** Total combined pier count → busyness level index (0–4). */
-export function totalLevel(t: number): number {
-  if (t <= 0) return 0;
-  if (t <= 20) return 1;
-  if (t <= 55) return 2;
-  if (t <= 90) return 3;
-  return 4;
-}
+const LEVEL_FRACTIONS = [0.08, 0.3, 0.65];
 
-/** A 0–100 "typical" value → level index, for coloring the popular-times bars. */
-export function mapV(v: number): number {
-  return v <= 8 ? 0 : v <= 28 ? 1 : v <= 58 ? 2 : v <= 82 ? 3 : 4;
+export const DEFAULT_CAPACITY = 500;
+
+export function levelForCount(count: number, capacity: number): number {
+  if (count <= 0) return 0; // Empty
+  const cap = capacity > 0 ? capacity : DEFAULT_CAPACITY;
+  const f = count / cap;
+  if (f < LEVEL_FRACTIONS[0]) return 1; // Quiet
+  if (f < LEVEL_FRACTIONS[1]) return 2; // Moderate
+  if (f < LEVEL_FRACTIONS[2]) return 3; // Busy
+  return 4; // Packed
 }
 
 /** Soften the single approximate count into a "likely lo–hi" range. */

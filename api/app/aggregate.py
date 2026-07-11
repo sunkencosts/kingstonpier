@@ -7,6 +7,7 @@ and DST are handled in one place. At ~1 sample / 3 min over an 8-week window
 
 from __future__ import annotations
 
+import heapq
 from collections import defaultdict
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
@@ -80,6 +81,26 @@ def todays_trend(
         else:
             trend.append(typical_today[h])
     return trend
+
+
+def capacity(samples: list[Sample], prior: int, headroom: float) -> int:
+    """The count that means "packed" (full-height bar), as a one-way ratchet.
+
+    Anchored at `prior` (a physical estimate of a full pier) and only ever
+    raised — never lowered — to `p99(observed) * headroom` once real crowds
+    exceed it. This is deliberately NOT an auto-fit to the observed peak: that
+    would make whatever hour is busiest look packed even on a quiet dataset.
+    The frontend derives its Empty→Packed bands as fractions of this value.
+    """
+    if not samples:
+        return prior
+    # p99 is the element at ascending rank int(0.99*(n-1)) — i.e. the k-th
+    # largest, where k is the ~1% tail above it. nlargest(k) selects just that
+    # tail instead of fully sorting all ~27k rows on the /now hot path.
+    n = len(samples)
+    k = n - int(0.99 * (n - 1))
+    p99 = heapq.nlargest(k, (s.total for s in samples))[-1]
+    return max(prior, round(p99 * headroom))
 
 
 def compare_pct(total: int, typical_today: list[int], now_hour: int) -> int:

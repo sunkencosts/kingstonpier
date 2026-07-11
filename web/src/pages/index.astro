@@ -3,13 +3,12 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import HeroCard from '../components/HeroCard.astro';
 import WeatherCard from '../components/WeatherCard.astro';
-import TrendChart from '../components/TrendChart.astro';
 import PopularTimes from '../components/PopularTimes.astro';
 import MethodCard from '../components/MethodCard.astro';
 import Footer from '../components/Footer.astro';
-import { totalLevel, loHi } from '../lib/busyness';
+import { levelForCount, loHi } from '../lib/busyness';
 import { initialNow } from '../lib/api';
-import { sceneTime } from '../lib/format';
+import { sceneTime, busiestCaption } from '../lib/format';
 
 // First paint renders synchronously from the synthetic mock (a realistic
 // placeholder for a static build); the client immediately fetches the live /now
@@ -17,14 +16,14 @@ import { sceneTime } from '../lib/format';
 const now = initialNow();
 const updated = new Date(now.lastUpdated);
 
-const idx = totalLevel(now.total);
+const idx = levelForCount(now.total, now.capacity);
 const { lo, hi } = loHi(now.total);
 const secs = Math.max(0, Math.round((Date.now() - updated.getTime()) / 1000));
 
 const scene = sceneTime(now.lastUpdated);
 const timestamp = scene.timestamp;
 const todayDay = scene.todayDay;
-const popularCaption = 'Usually busiest around 5–6 PM on weekdays.';
+const popularCaption = busiestCaption(now.popularByDay);
 ---
 
 <Layout>
@@ -47,16 +46,18 @@ const popularCaption = 'Usually busiest around 5–6 PM on weekdays.';
       />
      
 
+      
+
       <div class="charts-row">
-        
         <PopularTimes
           popularByDay={now.popularByDay}
           selectedDay={todayDay}
           todayDay={todayDay}
           nowHour={now.nowHour}
+          capacity={now.capacity}
+          trend={now.trend}
           caption={popularCaption}
         />
-        <TrendChart trend={now.trend} nowHour={now.nowHour} />
       </div>
       <WeatherCard weather={now.weather} />
       <MethodCard />

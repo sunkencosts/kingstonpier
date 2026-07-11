@@ -24,14 +24,12 @@ src/
     Header.astro           logo, live/stale status pill, theme toggle
     HeroCard.astro         approximate count, range chip, compare badge, tide gauge
     WeatherCard.astro      Kingston conditions
-    TrendChart.astro       "Today so far" sparkline (inline SVG)
-    PopularTimes.astro     weekday switcher + hourly bars
+    PopularTimes.astro     weekday switcher + hourly bars (today overlays actual vs typical)
     Footer.astro
   lib/
-    busyness.ts            REAL spec: levels, colors, thresholds, lo/hi, mapV
+    busyness.ts            REAL spec: capacity-relative levels, colors, lo/hi
     api.ts                 NowPayload type + fetchNow() (mock today, tunnel later)
     mock.ts                synthetic data (replace by pointing api.ts at the API)
-    spark.ts               sparkline SVG builder (server + client)
     bars.ts                popular-times bar builder (server + client)
   styles/global.css        theme tokens (light/dark), bento grid, shared classes
 ```
@@ -41,13 +39,14 @@ src/
 - **Theming** is pure CSS custom properties. Default = light; dark applies from
   `prefers-color-scheme` *or* an explicit `[data-theme]` set by the toggle
   (persisted to `localStorage`, applied before first paint to avoid a flash).
-- **No chart library.** The design's two charts are a hand-built gradient SVG
-  sparkline (with a dashed "future" segment) and a per-hour CSS bar chart where
-  each bar is colored by its busyness level with a ring on the current hour.
-  Reproducing these as inline SVG + CSS is pixel-faithful and dependency-free —
-  a charting lib would be *more* code here for *worse* fidelity. The plan names
-  uPlot/Chart.js as an option; if live zoom/tooltips are ever wanted, swap
-  `spark.ts`/`bars.ts` for a uPlot island — the data shape won't change.
+- **No chart library.** The popular-times view is a per-hour CSS bar chart where
+  each bar is colored by its busyness level (relative to `capacity`) with a ring
+  on the current hour. When today is selected, each elapsed hour overlays today's
+  actual count (solid) on the typical average (ghost) so above/below-normal reads
+  at a glance — this absorbs the old "Today so far" sparkline, which was removed.
+  Reproducing this as CSS is pixel-faithful and dependency-free — a charting lib
+  would be *more* code for *worse* fidelity. If live zoom/tooltips are ever
+  wanted, swap `bars.ts` for a uPlot island — the data shape won't change.
 - **Feed states.** `<main data-feed="live|stale">` drives the status pill and
   the amber "last known reading" note. The poll flips it to `stale` on fetch
   failure or a timestamp older than `STALE_AFTER_MS`, never blanking the page.

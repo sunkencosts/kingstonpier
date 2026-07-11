@@ -80,7 +80,7 @@ trap cleanup INT TERM EXIT
 echo "[dev] starting tracker + API (:$API_PORT) + dashboard (:4321)"
 ( cd "$ROOT/tracker" && exec ./.venv/bin/python -u crowd_tracker.py --watch 3 ) \
     > >(sed -u 's/^/[tracker] /') 2>&1 & pids+=($!)
-( cd "$ROOT/api" && exec .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port "$API_PORT" ) \
+( cd "$ROOT/api" && exec .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port "$API_PORT" --reload --reload-dir app ) \
     > >(sed -u 's/^/[api]     /') 2>&1 & pids+=($!)
 # Exec astro directly (not `npm run dev`) so the recorded PID is the server and
 # Ctrl+C actually stops it — npm doesn't forward the signal to its child.

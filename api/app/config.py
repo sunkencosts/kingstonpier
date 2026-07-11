@@ -50,6 +50,15 @@ class Settings:
     popular_weeks: int = int(os.getenv("KP_POPULAR_WEEKS", "8"))
     stale_after_s: int = int(os.getenv("KP_STALE_AFTER_S", "600"))
 
+    # Busyness capacity — the count that reads as "packed" / a full-height bar.
+    # A one-way ratchet: it starts at the physical prior and only ever rises to
+    # track a genuinely busier observed peak, so a quiet peak can never masquerade
+    # as packed. The prior is a physical estimate of a full pier, not a tuning
+    # knob; the level bands live on the frontend as fractions of this. See the
+    # capacity() aggregate.
+    capacity_prior: int = int(os.getenv("KP_CAPACITY_PRIOR", "500"))
+    capacity_headroom: float = float(os.getenv("KP_CAPACITY_HEADROOM", "1.15"))
+
 
 @lru_cache
 def settings() -> Settings:

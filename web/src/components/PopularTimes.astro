@@ -1,19 +1,28 @@
 ---
 import { DAYS, type Day } from '../lib/busyness';
-import { renderBars, scaleMaxOf } from '../lib/bars';
+import { renderBars, heightMaxOf } from '../lib/bars';
 
 interface Props {
   popularByDay: Record<Day, number[]>;
   selectedDay: Day; // day shown on first paint
-  todayDay: Day; // real weekday — its current hour gets the "now" ring
+  todayDay: Day; // real weekday — its current hour gets the "now" ring + overlay
   nowHour: number;
+  capacity: number; // count that reads as a full-height bar
+  trend: number[]; // today's ACTUAL hourly counts (for the today overlay)
   caption: string;
 }
-const { popularByDay, selectedDay, todayDay, nowHour, caption } = Astro.props;
+const { popularByDay, selectedDay, todayDay, nowHour, capacity, trend, caption } = Astro.props;
 
-const scaleMax = scaleMaxOf(popularByDay);
-const initialBars = renderBars(popularByDay[selectedDay], selectedDay === todayDay ? nowHour : null, scaleMax);
-const dataJson = JSON.stringify({ popularByDay, todayDay, nowHour, scaleMax });
+const isToday = selectedDay === todayDay;
+const heightMax = heightMaxOf(popularByDay, trend);
+const initialBars = renderBars(
+  popularByDay[selectedDay],
+  isToday ? trend : null,
+  isToday ? nowHour : null,
+  capacity,
+  heightMax,
+);
+const dataJson = JSON.stringify({ popularByDay, todayDay, nowHour, capacity, heightMax, trend });
 ---
 
 <section class="card chart-card">
@@ -40,7 +49,10 @@ const dataJson = JSON.stringify({ popularByDay, todayDay, nowHour, scaleMax });
   <div class="ticks">
     <span>6a</span><span>Noon</span><span>6p</span><span>11p</span>
   </div>
-  <div class="pop-caption">{caption}</div>
+
+  
+
+  <!-- <div class="pop-caption" id="pop-caption">{caption}</div> -->
 
   <script type="application/json" id="pop-data" set:html={dataJson} />
 </section>
@@ -86,9 +98,16 @@ const dataJson = JSON.stringify({ popularByDay, todayDay, nowHour, scaleMax });
         c.classList.toggle('active', on);
         c.setAttribute('aria-pressed', on ? 'true' : 'false');
       }
-      const { popularByDay, todayDay, nowHour, scaleMax } = popData();
+      const { popularByDay, todayDay, nowHour, capacity, heightMax, trend } = popData();
       if (popularByDay?.[day]) {
-        bars.innerHTML = renderBars(popularByDay[day], day === todayDay ? nowHour : null, scaleMax || 100);
+        const isToday = day === todayDay;
+        bars.innerHTML = renderBars(
+          popularByDay[day],
+          isToday ? trend : null,
+          isToday ? nowHour : null,
+          capacity,
+          heightMax,
+        );
       }
     });
   }
