@@ -77,6 +77,9 @@ const dataJson = JSON.stringify({ popularByDay, todayDay, nowHour, scaleMax });
     chips.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest('button.chip') as HTMLButtonElement | null;
       if (!btn) return;
+      // Mark that the user has made an explicit choice so live polls stop
+      // auto-following the current day and keep this selection instead.
+      chips.dataset.userSelected = 'true';
       const day = btn.dataset.day!;
       for (const c of chips.querySelectorAll('button.chip')) {
         const on = c === btn;

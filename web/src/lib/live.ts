@@ -85,8 +85,17 @@ export function applyNow(now: NowPayload): void {
     });
   }
   const chips = document.getElementById('day-chips');
-  const active = chips?.querySelector<HTMLButtonElement>('button.chip.active');
-  const day = (active?.dataset.day as string) ?? todayDay;
+  let day: Day = todayDay;
+  if (chips?.dataset.userSelected === 'true') {
+    const active = chips.querySelector<HTMLButtonElement>('button.chip.active');
+    day = (active?.dataset.day as Day) ?? todayDay;
+  } else if (chips) {
+    for (const c of chips.querySelectorAll<HTMLButtonElement>('button.chip')) {
+      const on = c.dataset.day === todayDay;
+      c.classList.toggle('active', on);
+      c.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+  }
   const bars = document.getElementById('pop-bars');
   if (bars && now.popularByDay[day]) {
     bars.innerHTML = renderBars(now.popularByDay[day], day === todayDay ? now.nowHour : null, scaleMax);

@@ -134,14 +134,7 @@ body {
   width: 74%;
   max-width: 15px;
   border-radius: 4px;
-  transition: height 0.3s ease, background 0.3s ease;
-}
-
-.bar-now {
-  font-size: 8px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1;
+  transition: height 0.3s ease, background 0.3s ease, box-shadow 0.15s ease;
 }
 
 .bar-col {
@@ -202,9 +195,11 @@ body {
 .bar-col:focus-visible {
   outline: none;
 }
-/* The "now" bar and the keyboard-focused bar share one ring definition. */
-.bar-col.is-now .bar,
-.bar-col:focus-visible .bar {
+/* The ring marks the bar the tooltip is on — hover, keyboard focus, or tap.
+   The transition (on .bar) glides it between bars rather than flickering. */
+.bar-col:hover .bar,
+.bar-col:focus-visible .bar,
+.bar-col.show-tip .bar {
   box-shadow: 0 0 0 2px var(--card), 0 0 0 3.5px var(--text);
 }
 
