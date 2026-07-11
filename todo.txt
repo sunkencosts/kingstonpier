@@ -1,3 +1,3 @@
 - connect to prod database in dbeaver and delete old data (nighttime ruins things)
 - keep labelling 
-- quick joke about the geese.
+- load the correct day in the trend chart. I opened on sat and it was still on fri

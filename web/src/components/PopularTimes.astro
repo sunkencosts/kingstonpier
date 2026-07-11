@@ -61,6 +61,18 @@ const dataJson = JSON.stringify({ popularByDay, todayDay, nowHour, scaleMax });
     }
   }
 
+  // Tap-to-reveal for touch devices (where :hover never fires). On hover-capable
+  // devices we skip this entirely — :hover already shows exactly one tooltip, and
+  // a sticky click-state would let a second one linger while hovering elsewhere.
+  if (bars && window.matchMedia('(hover: none)').matches) {
+    document.addEventListener('click', (e) => {
+      const col = (e.target as HTMLElement).closest('.bar-col') as HTMLElement | null;
+      const reopen = col && !col.classList.contains('show-tip') && bars.contains(col);
+      for (const c of bars.querySelectorAll('.bar-col.show-tip')) c.classList.remove('show-tip');
+      if (reopen) col!.classList.add('show-tip');
+    });
+  }
+
   if (chips && bars) {
     chips.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest('button.chip') as HTMLButtonElement | null;

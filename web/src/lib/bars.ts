@@ -3,11 +3,18 @@
 // above it — all pixel-faithful to the design and cheap to re-render on a
 // weekday switch. Used both server-side (first paint) and client-side (switch).
 
-import { LEVEL_COLORS, mapV } from './busyness';
+import { LEVEL_COLORS, levelWord, mapV } from './busyness';
 
 const START_H = 6;
 const END_H = 23;
 const MAX_BAR_PX = 88;
+
+/** 17 → "5 PM", 12 → "12 PM", 6 → "6 AM". */
+function hourLabel(h: number): string {
+  const period = h < 12 ? 'AM' : 'PM';
+  const hr = h % 12 === 0 ? 12 : h % 12;
+  return `${hr} ${period}`;
+}
 
 /** Peak value across every day — the reference the bars fill to. */
 export function scaleMaxOf(popularByDay: Record<string, number[]>): number {
@@ -30,12 +37,19 @@ export function renderBars(vals: number[], nowHour: number | null, scaleMax = 10
     const li = mapV(v);
     const isNow = nowHour !== null && h === nowHour;
     const height = Math.min(MAX_BAR_PX, Math.max(3, (v / denom) * MAX_BAR_PX));
-    const ring = isNow ? 'box-shadow:0 0 0 2px var(--card),0 0 0 3.5px var(--text);' : '';
+    const time = hourLabel(h);
+    const word = levelWord(li);
+    const raw = Math.round(v);
     out +=
-      `<div class="bar-col">` +
+      `<div class="bar-col${isNow ? ' is-now' : ''}" role="button" tabindex="0" ` +
+      `aria-label="${time}: ${word}, ${raw} out of 100">` +
       (isNow ? `<span class="bar-now">now</span>` : ``) +
       `<div class="bar" style="height:${height.toFixed(1)}px;` +
-      `background:${LEVEL_COLORS[li]};opacity:${isNow ? 1 : 0.88};${ring}"></div>` +
+      `background:${LEVEL_COLORS[li]};opacity:${isNow ? 1 : 0.88};"></div>` +
+      `<span class="bar-tip" role="tooltip">` +
+      `<span class="bar-tip-time">${time}</span>` +
+      `<span class="bar-tip-val">${word} · ${raw}</span>` +
+      `</span>` +
       `</div>`;
   }
   return out;
