@@ -85,23 +85,6 @@ const cells = Array.from({ length: ROWS * COLS }, (_, k) => {
     </li>
   </ol>
 
-  <!-- The model itself: the part that says "I know what a density head is." -->
-  <div class="model">
-    <p class="model-line">
-      The counter is a <strong>frozen MobileNetV3</strong> encoder with a small
-      trained <strong>density head</strong>, learned from head-point labels on
-      these exact cameras. Estimating density rather than drawing boxes is what
-      lets it count the sitting people and tiny figures far away that an object detector walks straight past.
-    </p>
-    <div class="facts">
-      <div class="fact">
-        <span class="fact-k">~0.8<span class="fact-vs">vs ~2.8</span></span>
-        <span class="fact-v">people/frame held-out error — density model vs a YOLO detector on the same frames</span>
-      </div>
-     
-      
-    </div>
-  </div>
 
   <!-- Honesty about the limits is itself the credential. -->
   <p class="caveat">
