@@ -22,7 +22,7 @@ class Weather(BaseModel):
 class NowResponse(BaseModel):
     total: int
     lastUpdated: str  # UTC ISO-8601 of the reading
-    comparePct: int  # signed: +ve busier than typical, -ve quieter
+    comparePct: int | None  # signed: +ve busier than typical, -ve quieter; None = no baseline yet
     trend: list[int]  # 24 hourly counts for today (index = hour)
     nowHour: int
     capacity: int  # count that reads as "packed" — full-height bar / top band

@@ -18,7 +18,7 @@ export interface WeatherNow {
 export interface NowPayload {
   total: number; // combined, explicitly-approximate people count
   lastUpdated: string; // ISO timestamp of the reading
-  comparePct: number; // +14 => 14% busier than a typical slot; negative => quieter
+  comparePct: number | null; // +14 => 14% busier than a typical slot; negative => quieter; null => no baseline yet
   trend: number[]; // 24 hourly counts for *today* (index = hour of day)
   nowHour: number; // current hour index into `trend`
   capacity: number; // count that reads as "packed" — full bar / top level band

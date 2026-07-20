@@ -73,11 +73,19 @@ export function busiestCaption(popularByDay: Record<string, number[]>): string {
   return `Usually busiest around ${range} on weekdays.`;
 }
 
-export function compareText(pct: number): string {
+export function compareText(pct: number | null): string {
+  if (pct === null) return 'Not enough data yet';
   return pct >= 0 ? 'Busier than usual' : 'Quieter than usual';
 }
 
-export function compareColors(pct: number): { color: string; bg: string; busier: boolean } {
+export function compareColors(pct: number | null): {
+  color: string;
+  bg: string;
+  busier: boolean | null;
+} {
+  if (pct === null) {
+    return { busier: null, color: 'var(--muted)', bg: 'color-mix(in srgb, var(--muted) 14%, var(--card))' };
+  }
   const busier = pct >= 0;
   return {
     busier,

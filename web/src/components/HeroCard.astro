@@ -1,5 +1,6 @@
 ---
 import { LEVELS, LEVEL_COLORS } from '../lib/busyness';
+import { compareText, compareColors } from '../lib/format';
 
 interface Props {
   total: number;
@@ -7,20 +8,15 @@ interface Props {
   hi: number;
   levelIdx: number;
   timestamp: string; // e.g. "Thu · 3:07 PM"
-  comparePct: number; // signed
+  comparePct: number | null; // signed; null => no baseline to compare against yet
 }
 const { total, lo, hi, levelIdx, timestamp, comparePct } = Astro.props;
 
 const levelWord = LEVELS[levelIdx];
 const levelColor = LEVEL_COLORS[levelIdx];
 
-const busier = comparePct >= 0;
-const compareText = busier ? 'Busier than usual' : 'Quieter than usual';
-// Warm accent for "busier", cool teal for "quieter".
-const compareColor = busier ? '#D9772E' : '#2E9E86';
-const compareBg = busier
-  ? 'color-mix(in srgb, #E8863C 16%, var(--card))'
-  : 'color-mix(in srgb, #2E9E86 15%, var(--card))';
+const { busier, color: compareColor, bg: compareBg } = compareColors(comparePct);
+const compareTextValue = compareText(comparePct);
 
 // Precompute the tide gauge here — Astro's template parser dislikes bare "<="
 // comparisons inside inline expressions.
@@ -80,10 +76,10 @@ const segs = LEVEL_COLORS.map((c, i) => {
     </div>
 
     <span class="compare sk-live" id="hero-compare" style={`background:${compareBg};color:${compareColor}`}>
-      <svg id="hero-compare-chev" class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style={busier ? '' : 'transform:rotate(180deg)'}>
+      <svg id="hero-compare-chev" class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style={busier === null ? 'display:none' : busier ? '' : 'transform:rotate(180deg)'}>
         <path d="M6 15l6-6 6 6"></path>
       </svg>
-      <span id="hero-compare-text">{compareText}</span>
+      <span id="hero-compare-text">{compareTextValue}</span>
     </span>
   </div>
 </section>

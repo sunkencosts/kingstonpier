@@ -103,11 +103,15 @@ def capacity(samples: list[Sample], prior: int, headroom: float) -> int:
     return max(prior, round(p99 * headroom))
 
 
-def compare_pct(total: int, typical_today: list[int], now_hour: int) -> int:
-    """How far the current count sits above/below the typical for this slot (%)."""
+def compare_pct(total: int, typical_today: list[int], now_hour: int) -> int | None:
+    """How far the current count sits above/below the typical for this slot (%).
+
+    Returns None when there's no historical baseline for this hour yet - a bare
+    0 would be indistinguishable from "exactly typical" and mislead the badge.
+    """
     typ = typical_today[now_hour] if 0 <= now_hour < len(typical_today) else 0
     if not typ:
-        return 0
+        return None
     return round((total - typ) / typ * 100)
 
 

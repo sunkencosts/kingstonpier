@@ -81,7 +81,13 @@ def now(response: Response) -> NowResponse:
         samples, KINGSTON_TZ, now_local, latest_total, typical_today
     )
     total = latest_total if latest_total is not None else 0
-    compare = aggregate.compare_pct(total, typical_today, now_hour)
+    # No live reading at all → nothing to compare against usual, regardless of
+    # what the math would say for a bare 0 count.
+    compare = (
+        aggregate.compare_pct(total, typical_today, now_hour)
+        if latest_total is not None
+        else None
+    )
     cap = aggregate.capacity(samples, cfg.capacity_prior, cfg.capacity_headroom)
 
     if latest is not None:

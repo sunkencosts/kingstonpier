@@ -52,7 +52,10 @@ export function applyNow(now: NowPayload): void {
   }
   setText('hero-compare-text', compareText(now.comparePct));
   const chev = document.getElementById('hero-compare-chev');
-  if (chev) chev.style.transform = busier ? '' : 'rotate(180deg)';
+  if (chev) {
+    chev.style.display = busier === null ? 'none' : '';
+    chev.style.transform = busier === false ? 'rotate(180deg)' : '';
+  }
 
   applyGauge(idx);
 
